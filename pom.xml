@@ -16,7 +16,7 @@
     <packaging>jar</packaging>
     <name>TEI Schema Tools</name>
     <description>TEI Schema Tools</description>
-    <url>https://github.com/interedition/text/wiki</url>
+    <url>https://github.com/interedition/tei-schema/wiki</url>
     <organization>
         <name>The Interedition Development Group</name>
         <url>http://www.interedition.eu/</url>

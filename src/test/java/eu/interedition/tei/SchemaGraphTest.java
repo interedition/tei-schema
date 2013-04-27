@@ -19,12 +19,14 @@
 
 package eu.interedition.tei;
 
+import com.google.common.base.Preconditions;
+import com.google.common.io.PatternFilenameFilter;
+import eu.interedition.tei.util.XML;
 import org.junit.Assert;
 import org.junit.Test;
-import org.kohsuke.rngom.parse.IllegalSchemaException;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.transform.TransformerException;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 
 /**
@@ -33,12 +35,28 @@ import java.io.File;
 public class SchemaGraphTest {
 
     @Test
-    public void read() throws IllegalSchemaException, TransformerException, XMLStreamException {
+    public void readSchema() throws Exception {
         final String teiRootPath = System.getProperty("tei.root");
-        if (teiRootPath == null) {
-            return;
+        if (teiRootPath != null) {
+            Assert.assertNotNull(SchemaGraph.read(Schema.read(new File(teiRootPath))));
         }
+    }
 
-        Assert.assertNotNull(SchemaGraph.read(new File(teiRootPath)));
+    @Test
+    public void readCustomizations() throws Exception {
+        final String dataPath = System.getProperty("tei.data");
+        if (dataPath != null) {
+            final File data = new File(dataPath);
+            Preconditions.checkArgument(data.isDirectory(), data);
+            for (File oddFile : data.listFiles(new PatternFilenameFilter(".+\\.odd$"))) {
+                System.out.println(oddFile);
+                XMLEventReader xml = XML.inputFactory().createXMLEventReader(new StreamSource(oddFile));
+                try {
+                    Schema.read(xml);
+                } finally {
+                    xml.close();
+                }
+            }
+        }
     }
 }

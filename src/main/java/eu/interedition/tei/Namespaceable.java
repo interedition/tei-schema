@@ -21,36 +21,16 @@ package eu.interedition.tei;
 
 import eu.interedition.tei.util.XML;
 
-import javax.xml.stream.events.StartElement;
+import java.net.URI;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
-public interface Combinable {
+public interface Namespaceable {
 
-    EditOperation getEditOperation();
+    String DEFAULT_NS_STR = "http://www.tei-c.org/ns/1.0";
 
-    /**
-     * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
-     */
-    enum EditOperation {
-        ADD, CHANGE, REPLACE, DELETE;
+    URI DEFAULT_NS = XML.toURI(DEFAULT_NS_STR);
 
-        public static EditOperation from(StartElement element) {
-            final String mode = XML.optionalAttributeValue(element, "mode");
-            if (mode == null) {
-                return null;
-            }
-            if ("change".equals(mode)) {
-                return CHANGE;
-            } else if ("add".equals(mode)) {
-                return ADD;
-            } else if ("delete".equals(mode)) {
-                return DELETE;
-            } else if ("replace".equals(mode)) {
-                return REPLACE;
-            }
-            throw new IllegalArgumentException(mode);
-        }
-    }
+    URI getNamespace();
 }

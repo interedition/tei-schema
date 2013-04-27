@@ -20,6 +20,7 @@
 package eu.interedition.tei;
 
 import com.google.common.base.Objects;
+import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
 
 import javax.xml.stream.XMLEventReader;
@@ -50,16 +51,16 @@ public class AttributeList extends ArrayList<AttributeNode> implements Attribute
             final XMLEvent event = xml.nextEvent();
             if (event.isStartElement()) {
                 final StartElement element = event.asStartElement();
-                if (XML.hasName(element, Specification.TEI_NS, "attDef")) {
+                if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "attDef")) {
                     attributeList.add(AttributeDefinition.parse(element, xml));
-                } else if (XML.hasName(element, Specification.TEI_NS, "attList")) {
+                } else if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "attList")) {
                     attributeList.add(AttributeList.parse(element, xml));
-                } else if (XML.hasName(element, Specification.TEI_NS, "attRef")) {
+                } else if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "attRef")) {
                     attributeList.add(new AttributeReference(element));
                 }
             } else if (event.isEndElement()) {
                 final EndElement element = event.asEndElement();
-                if (XML.hasName(element, Specification.TEI_NS, "attList")) {
+                if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "attList")) {
                     break;
                 }
             }

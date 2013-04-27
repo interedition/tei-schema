@@ -20,6 +20,8 @@
 package eu.interedition.tei;
 
 import com.google.common.base.Objects;
+import eu.interedition.tei.util.LocalizedStrings;
+import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
 
 import javax.xml.stream.XMLEventReader;
@@ -59,7 +61,7 @@ public class Values extends ArrayList<Values.Item> implements Combinable {
             final XMLEvent event = xml.nextEvent();
             if (event.isStartElement()) {
                 final StartElement element = event.asStartElement();
-                if (XML.hasName(element, Specification.TEI_NS, "valItem")) {
+                if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "valItem")) {
                     values.add(Item.from(element, xml));
                 }
             }
@@ -89,11 +91,11 @@ public class Values extends ArrayList<Values.Item> implements Combinable {
                 final XMLEvent event = xml.nextEvent();
                 if (event.isStartElement()) {
                     final StartElement element = event.asStartElement();
-                    if (XML.hasName(element, Specification.TEI_NS, "desc")) {
+                    if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "desc")) {
                         item.descriptions.add(element, xml);
-                    } else if (XML.hasName(element, Specification.TEI_NS, "gloss")) {
+                    } else if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "gloss")) {
                         item.definitions.add(element, xml);
-                    } else if (XML.hasName(element, Specification.TEI_NS, "altIdent")) {
+                    } else if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "altIdent")) {
                         item.altIdents.add(element, xml);
                     }
                 }

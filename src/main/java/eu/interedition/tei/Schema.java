@@ -25,6 +25,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.PatternFilenameFilter;
+import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
 
 import javax.xml.stream.XMLEventReader;
@@ -35,7 +36,7 @@ import javax.xml.stream.events.XMLEvent;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
-import java.util.Arrays;
+import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -45,39 +46,19 @@ import java.util.logging.Logger;
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
-public class Schema implements Identified {
+public class Schema implements Identified, Namespaceable {
     private static final Logger LOG = Logger.getLogger(Schema.class.getName());
 
     final String ident;
+    final URI namespace;
     final String prefix;
     final Set<String> start;
-    final String namespace;
 
-    final Map<String, Module> modules;
-    final Set<String> moduleReferences;
+    final Set<ModuleReference> modules;
+    final Set<Reference> elements;
+    final Set<Reference> macros;
+    final Set<Reference> classes;
     final Map<String, Specification> specifications;
-
-    public Schema(String ident, String prefix, Set<String> start, String namespace, Map<String, Module> modules, Set<String> moduleReferences, Map<String, Specification> specifications) {
-        this.ident = ident;
-        this.prefix = prefix;
-        this.start = start;
-        this.namespace = namespace;
-        this.modules = modules;
-        this.moduleReferences = moduleReferences;
-        this.specifications = specifications;
-    }
-
-    public Schema(StartElement element, Map<String, Module> modules, Set<String> moduleReferences, Map<String, Specification> specifications) {
-        this(
-                XML.optionalAttributeValue(element, "ident"),
-                XML.optionalAttributeValue(element, "prefix"),
-                Sets.newHashSet(Arrays.asList(Objects.firstNonNull(XML.optionalAttributeValue(element, "start"), "").trim().split("\\s+"))),
-                XML.optionalAttributeValue(element, "ns"),
-                modules,
-                moduleReferences,
-                specifications
-        );
-    }
 
     public static Schema read(File sourceRoot) throws XMLStreamException, TransformerException, IllegalSchemaException {
         final File specs = new File(sourceRoot, "Specs");
@@ -97,20 +78,24 @@ public class Schema implements Identified {
 
         for (final File specFile : specs.listFiles(new PatternFilenameFilter(".+\\.xml$"))) {
             final XMLEventReader xml = xmlInputFactory.createXMLEventReader(new StreamSource(specFile));
-            for (Specification specification : Specification.read(xml)) {
-                final String id = specification.getIdent();
-                Preconditions.checkState(
-                        specifications.put(id, specification) == null,
-                        id + " is not a unique identifier"
-                );
+            try {
+                for (Specification specification : Specification.read(xml)) {
+                    final String id = specification.getIdent();
+                    Preconditions.checkState(
+                            specifications.put(id, specification) == null,
+                            id + " is not a unique identifier"
+                    );
+                }
+            } finally {
+                xml.close();
             }
         }
 
-        final Map<String, Module> modules = Module.read(guidelines);
-
         if (LOG.isLoggable(Level.FINE)) {
-            LOG.log(Level.FINE, "Read {0} specification(s) and {1} module(s) in {2}", new Object[]{
-                    specifications.size(), modules.size(), stopwatch.stop()
+            LOG.log(Level.FINE, "Read {0} specification(s) from {1} in {2}", new Object[]{
+                    specifications.size(),
+                    sourceRoot,
+                    stopwatch.stop()
             });
         }
 
@@ -118,24 +103,39 @@ public class Schema implements Identified {
                 "all",
                 "tei_",
                 Sets.newHashSet("TEI", "teiCorpus"),
-                "tei",
-                modules,
-                Collections.<String>emptySet(),
+                Namespaceable.DEFAULT_NS,
+                Collections.<ModuleReference>emptySet(),
+                Collections.<Reference>emptySet(),
+                Collections.<Reference>emptySet(),
+                Collections.<Reference>emptySet(),
                 specifications
         );
     }
 
     public static Schema read(XMLEventReader xml) throws XMLStreamException, IllegalSchemaException {
-        StartElement schemaSpecElement = null;
-        Map<String, Specification> specifications = Maps.newHashMap();
-        Set<String> moduleReferences = null;
+        Schema schema = null;
+
+        final Map<String, Specification> specifications = Maps.newHashMap();
+        final Set<ModuleReference> modules = Sets.newTreeSet();
+        final Set<Reference> elements = Sets.newTreeSet();
+        final Set<Reference> macros = Sets.newTreeSet();
+        final Set<Reference> classes = Sets.newTreeSet();
         while (xml.hasNext()) {
             final XMLEvent event = xml.nextEvent();
 
             if (event.isStartElement()) {
                 final StartElement element = event.asStartElement();
-                if (XML.hasName(element, Specification.TEI_NS, "moduleRef")) {
-                    moduleReferences.add(XML.requiredAttributeValue(element, "key"));
+                if (XML.hasName(element, DEFAULT_NS_STR, "schemaSpec")) {
+                    Preconditions.checkState(schema == null, "Multiple <schemaSpec/> elements");
+                    schema = new Schema(element, modules, elements, macros, classes, specifications);
+                } else if (XML.hasName(element, DEFAULT_NS_STR, "moduleRef")) {
+                    modules.add(ModuleReference.from(element));
+                } else if (XML.hasName(element, DEFAULT_NS_STR, "elementRef")) {
+                    elements.add(Reference.from(element));
+                } else if (XML.hasName(element, DEFAULT_NS_STR, "macroRef")) {
+                    macros.add(Reference.from(element));
+                } else if (XML.hasName(element, DEFAULT_NS_STR, "classRef")) {
+                    classes.add(Reference.from(element));
                 } else if (Specification.isSpecificationElement(element)) {
                     final Specification specification = Specification.from(event, xml);
                     specifications.put(specification.getIdent(), specification);
@@ -143,17 +143,16 @@ public class Schema implements Identified {
             }
         }
 
-        return (schemaSpecElement == null ? null : new Schema(
-                schemaSpecElement,
-                Collections.<String, Module>emptyMap(),
-                moduleReferences,
-                specifications
-        ));
+        return schema;
     }
 
     @Override
     public String getIdent() {
         return ident;
+    }
+
+    public String getModule() {
+        return null;
     }
 
     public Set<String> getStart() {
@@ -164,15 +163,48 @@ public class Schema implements Identified {
         return prefix;
     }
 
-    public String getNamespace() {
+    public URI getNamespace() {
         return namespace;
-    }
-
-    public Map<String, Module> getModules() {
-        return modules;
     }
 
     public Map<String, Specification> getSpecifications() {
         return specifications;
     }
+
+    private Schema(String ident, String prefix, Set<String> start, URI namespace,
+                   Set<ModuleReference> modules,
+                   Set<Reference> elements,
+                   Set<Reference> macros,
+                   Set<Reference> classes,
+                   Map<String, Specification> specifications) {
+        this.ident = ident;
+        this.namespace = Objects.firstNonNull(namespace, DEFAULT_NS);
+        this.prefix = prefix;
+        this.start = start;
+        this.modules = modules;
+        this.elements = elements;
+        this.macros = macros;
+        this.classes = classes;
+        this.specifications = specifications;
+    }
+
+    private Schema(StartElement element,
+                   Set<ModuleReference> modules,
+                   Set<Reference> elements,
+                   Set<Reference> macros,
+                   Set<Reference> classes,
+                   Map<String, Specification> specifications) {
+        this(
+                XML.optionalAttributeValue(element, "ident"),
+                XML.optionalAttributeValue(element, "prefix"),
+                Sets.newHashSet(XML.toList(XML.optionalAttributeValue(element, "start"))),
+                XML.toURI(XML.optionalAttributeValue(element, "ns")),
+                modules,
+                elements,
+                macros,
+                classes,
+                specifications
+        );
+    }
+
 }

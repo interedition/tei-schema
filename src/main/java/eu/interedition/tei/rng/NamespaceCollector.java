@@ -17,7 +17,7 @@
  * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package eu.interedition.tei;
+package eu.interedition.tei.rng;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;

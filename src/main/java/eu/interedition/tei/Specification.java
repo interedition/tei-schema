@@ -23,6 +23,8 @@ import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import eu.interedition.tei.util.LocalizedStrings;
+import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
 
 import javax.xml.namespace.QName;
@@ -32,6 +34,7 @@ import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import javax.xml.transform.TransformerException;
+import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,12 +42,11 @@ import java.util.Set;
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
-public class Specification implements Identified, Combinable {
-
-    public static final String TEI_NS = "http://www.tei-c.org/ns/1.0";
+public class Specification implements Identified, Namespaceable, Combinable {
 
     final String ident;
     final String module;
+    final URI namespace;
     final Type type;
     final String specType;
     final Combinable.EditOperation editOperation;
@@ -71,17 +73,17 @@ public class Specification implements Identified, Combinable {
             event = xml.nextEvent();
             if (event.isStartElement()) {
                 final StartElement element = event.asStartElement();
-                if (XML.hasName(element, TEI_NS, "classes")) {
+                if (XML.hasName(element, DEFAULT_NS_STR, "classes")) {
                     classesEditOperation = Combinable.EditOperation.from(element);
-                } else if (XML.hasName(element, TEI_NS, "memberOf")) {
+                } else if (XML.hasName(element, DEFAULT_NS_STR, "memberOf")) {
                     classes.put(XML.requiredAttributeValue(element, "key"), Combinable.EditOperation.from(element));
-                } else if (XML.hasName(element, TEI_NS, "content")) {
+                } else if (XML.hasName(element, DEFAULT_NS_STR, "content")) {
                     contentModel = ContentModel.parse(xml, "content");
-                } else if (XML.hasName(element, TEI_NS, "attList")) {
+                } else if (XML.hasName(element, DEFAULT_NS_STR, "attList")) {
                     attributeList = AttributeList.parse(element, xml);
-                } else if (XML.hasName(element, TEI_NS, "altIdent")) {
+                } else if (XML.hasName(element, DEFAULT_NS_STR, "altIdent")) {
                     altIdents.add(element, xml);
-                } else if (XML.hasName(element, TEI_NS, "desc")) {
+                } else if (XML.hasName(element, DEFAULT_NS_STR, "desc")) {
                     descriptions.add(element, xml);
                 }
             } else if (event.isEndElement()) {
@@ -111,17 +113,23 @@ public class Specification implements Identified, Combinable {
         this.content = content;
         this.ident = XML.requiredAttributeValue(specElement, "ident");
         this.module = XML.requiredAttributeValue(specElement, "module");
+        this.namespace = Objects.firstNonNull(XML.toURI(XML.optionalAttributeValue(specElement, "ns")), DEFAULT_NS);
         this.type = Type.from(specElement.getName().getLocalPart());
         this.specType = XML.optionalAttributeValue(specElement, "type");
         this.editOperation = Combinable.EditOperation.from(specElement);
-    }
-    public String getModule() {
-        return module;
     }
 
     @Override
     public String getIdent() {
         return ident;
+    }
+
+    public String getModule() {
+        return module;
+    }
+
+    public URI getNamespace() {
+        return namespace;
     }
 
     public Type getType() {
@@ -189,7 +197,7 @@ public class Specification implements Identified, Combinable {
     }
 
     static boolean isSpecificationElement(QName name) {
-        if (TEI_NS.equals(name.getNamespaceURI())) {
+        if (DEFAULT_NS.equals(name.getNamespaceURI())) {
             final String localName = name.getLocalPart();
             return ("elementSpec".equals(localName) ||  "classSpec".equals(localName) || "macroSpec".equals(localName));
         }

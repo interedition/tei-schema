@@ -17,7 +17,7 @@
  * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package eu.interedition.tei;
+package eu.interedition.tei.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -45,7 +45,10 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
+import java.net.URI;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -184,5 +187,13 @@ public class XML {
 
     public static boolean equals(QName name, String ns, String localName) {
         return localName.equals(name.getLocalPart()) && (ns == null || ns.equals(name.getNamespaceURI()));
+    }
+
+    public static URI toURI(String str) {
+        return (Strings.isNullOrEmpty(str) ? null : URI.create(str));
+    }
+
+    public static List<String> toList(String str) {
+        return Arrays.asList(Strings.nullToEmpty(str).trim().split("\\s+"));
     }
 }

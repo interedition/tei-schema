@@ -17,7 +17,7 @@
  * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package eu.interedition.tei;
+package eu.interedition.tei.util;
 
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;

@@ -19,6 +19,8 @@
 
 package eu.interedition.tei;
 
+import eu.interedition.tei.util.LocalizedStrings;
+import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
 
 import javax.xml.stream.XMLEventReader;
@@ -31,6 +33,7 @@ import javax.xml.stream.events.XMLEvent;
  */
 public class AttributeDefinition implements AttributeNode, Comparable<Identified>, Identified, Combinable {
     final String ident;
+    final String module;
     final String namespace;
     final String usage;
     final ContentModel dataType;
@@ -40,6 +43,7 @@ public class AttributeDefinition implements AttributeNode, Comparable<Identified
 
     public AttributeDefinition(StartElement element, ContentModel dataType, Values values, LocalizedStrings defaultValues) {
         this.ident = XML.requiredAttributeValue(element, "ident");
+        this.module = XML.optionalAttributeValue(element, "module");
         this.usage = XML.optionalAttributeValue(element, "usage");
         this.namespace = XML.optionalAttributeValue(element, "ns");
         this.editOperation = Combinable.EditOperation.from(element);
@@ -50,6 +54,11 @@ public class AttributeDefinition implements AttributeNode, Comparable<Identified
 
     public String getIdent() {
         return ident;
+    }
+
+
+    public String getModule() {
+        return module;
     }
 
     public String getNamespace() {
@@ -99,15 +108,15 @@ public class AttributeDefinition implements AttributeNode, Comparable<Identified
             final XMLEvent event = xml.nextEvent();
             if (event.isStartElement()) {
                 final StartElement element = event.asStartElement();
-                if (XML.hasName(element, Specification.TEI_NS, "datatype")) {
+                if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "datatype")) {
                     dataType = ContentModel.parse(xml, "datatype");
-                } else if (XML.hasName(element, Specification.TEI_NS, "defaultVal")) {
+                } else if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "defaultVal")) {
                     defaultValues.add(element, xml);
-                } else if (XML.hasName(element, Specification.TEI_NS, "valList")) {
+                } else if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "valList")) {
                     values = Values.parse(element, xml);
                 }
             } else if (event.isEndElement()) {
-                if (XML.hasName(event.asEndElement(), Specification.TEI_NS, "attDef")) {
+                if (XML.hasName(event.asEndElement(), Namespaceable.DEFAULT_NS_STR, "attDef")) {
                     break;
                 }
             }

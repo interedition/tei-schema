@@ -31,6 +31,8 @@ public interface Identified {
 
     String getIdent();
 
+    String getModule();
+
     final Function<Identified,String> TO_ID = new Function<Identified, String>() {
         @Override
         public String apply(Identified input) {

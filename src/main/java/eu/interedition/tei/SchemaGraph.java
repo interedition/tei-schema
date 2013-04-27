@@ -21,11 +21,7 @@ package eu.interedition.tei;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
-import org.kohsuke.rngom.parse.IllegalSchemaException;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.transform.TransformerException;
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -39,8 +35,8 @@ public class SchemaGraph {
     final Multimap<String, String> specificationDependencies = TreeMultimap.create();
     final Multimap<String, String> moduleDependencies = TreeMultimap.create();
 
-    public static SchemaGraph read(File sourceRoot) throws TransformerException, IllegalSchemaException, XMLStreamException {
-        final SchemaGraph graph = new SchemaGraph(Schema.read(sourceRoot));
+    public static SchemaGraph read(Schema schema) {
+        final SchemaGraph graph = new SchemaGraph(schema);
 
         for (Specification specification : graph.schema.specifications.values()) {
             final String module = specification.getModule();

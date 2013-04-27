@@ -24,6 +24,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import eu.interedition.tei.rng.RelaxCompactSerializer;
+import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.digested.DDefine;
 import org.kohsuke.rngom.digested.DElementPattern;
 import org.kohsuke.rngom.digested.DPattern;
@@ -70,7 +72,7 @@ public class ContentModel {
             public Void onElement(DElementPattern p) {
                 for (QName name : p.getName().listNames()) {
                     final String ns = name.getNamespaceURI();
-                    if (!Strings.isNullOrEmpty(ns) && !Specification.TEI_NS.equals(ns)) {
+                    if (!Strings.isNullOrEmpty(ns) && !Namespaceable.DEFAULT_NS.equals(ns)) {
                         continue;
                     }
                     references.add(name.getLocalPart());
@@ -114,7 +116,7 @@ public class ContentModel {
             while (xml.hasNext()) {
                 final XMLEvent event = xml.nextEvent();
                 if (event.isEndElement()) {
-                    if (XML.hasName(event.asEndElement(), Specification.TEI_NS, containerName)) {
+                    if (XML.hasName(event.asEndElement(), Namespaceable.DEFAULT_NS_STR, containerName)) {
                         break;
                     }
                 }

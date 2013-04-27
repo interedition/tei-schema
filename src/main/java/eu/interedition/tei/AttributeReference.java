@@ -19,6 +19,8 @@
 
 package eu.interedition.tei;
 
+import eu.interedition.tei.util.XML;
+
 import javax.xml.stream.events.StartElement;
 
 /**
@@ -35,6 +37,10 @@ public class AttributeReference implements AttributeNode, Identified, Comparable
     @Override
     public String getIdent() {
         return ident;
+    }
+
+    public String getModule() {
+        return null;
     }
 
     @Override

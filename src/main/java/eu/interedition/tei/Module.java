@@ -23,6 +23,8 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.io.PatternFilenameFilter;
+import eu.interedition.tei.util.LocalizedStrings;
+import eu.interedition.tei.util.XML;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
@@ -50,6 +52,10 @@ public class Module implements Identified {
         return ident;
     }
 
+    public String getModule() {
+        return null;
+    }
+
     public LocalizedStrings getDescriptions() {
         return descriptions;
     }
@@ -70,18 +76,18 @@ public class Module implements Identified {
                     final XMLEvent event = xml.nextEvent();
                     if (event.isStartElement()) {
                         final StartElement element = event.asStartElement();
-                        if (XML.hasName(element, Specification.TEI_NS, "moduleSpec")) {
+                        if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "moduleSpec")) {
                             final String id = XML.requiredAttributeValue(element, "ident");
                             Preconditions.checkState(
                                     modules.put(id, module = new Module(id)) == null,
                                     id + " is not a unique identifier"
                             );
-                        } else if (module != null && XML.hasName(element, Specification.TEI_NS, "desc")) {
+                        } else if (module != null && XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "desc")) {
                             module.getDescriptions().add(element, xml);
                         }
                     } else if (event.isEndElement()) {
                         final EndElement element = event.asEndElement();
-                        if (XML.hasName(element, Specification.TEI_NS, "moduleSpec")) {
+                        if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "moduleSpec")) {
                             module = null;
                         }
                     }

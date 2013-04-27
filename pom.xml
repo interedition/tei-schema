@@ -16,6 +16,40 @@
     <packaging>jar</packaging>
     <name>TEI Schema Tools</name>
     <description>TEI Schema Tools</description>
+    <url>https://github.com/interedition/text/wiki</url>
+    <organization>
+        <name>The Interedition Development Group</name>
+        <url>http://www.interedition.eu/</url>
+    </organization>
+    <inceptionYear>2013</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License</name>
+            <url>http://www.gnu.org/licenses/gpl.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:interedition/tei-schema.git</connection>
+        <developerConnection>scm:git:git@github.com:interedition/tei-schema.git</developerConnection>
+        <url>git@github.com:interedition/tei-schema.git</url>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/interedition/tei-schema/issues</url>
+    </issueManagement>
+
+    <developers>
+        <developer>
+            <id>gremid</id>
+            <name>Gregor Middell</name>
+            <url>http://gregor.middell.net/</url>
+        </developer>
+    </developers>
+
     <dependencies>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -34,6 +68,7 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>

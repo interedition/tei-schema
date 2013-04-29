@@ -112,7 +112,7 @@ public class Specification implements Identified, Namespaceable, Combinable {
         this.attributes = attributes;
         this.content = content;
         this.ident = XML.requiredAttributeValue(specElement, "ident");
-        this.module = XML.requiredAttributeValue(specElement, "module");
+        this.module = XML.optionalAttributeValue(specElement, "module");
         this.namespace = Objects.firstNonNull(XML.toURI(XML.optionalAttributeValue(specElement, "ns")), DEFAULT_NS);
         this.type = Type.from(specElement.getName().getLocalPart());
         this.specType = XML.optionalAttributeValue(specElement, "type");
@@ -197,7 +197,7 @@ public class Specification implements Identified, Namespaceable, Combinable {
     }
 
     static boolean isSpecificationElement(QName name) {
-        if (DEFAULT_NS.equals(name.getNamespaceURI())) {
+        if (DEFAULT_NS_STR.equals(name.getNamespaceURI())) {
             final String localName = name.getLocalPart();
             return ("elementSpec".equals(localName) ||  "classSpec".equals(localName) || "macroSpec".equals(localName));
         }

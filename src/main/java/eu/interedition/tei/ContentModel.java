@@ -26,6 +26,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import eu.interedition.tei.rng.RelaxCompactSerializer;
 import eu.interedition.tei.util.XML;
+import org.kohsuke.rngom.ast.builder.BuildException;
 import org.kohsuke.rngom.digested.DDefine;
 import org.kohsuke.rngom.digested.DElementPattern;
 import org.kohsuke.rngom.digested.DPattern;
@@ -72,7 +73,7 @@ public class ContentModel {
             public Void onElement(DElementPattern p) {
                 for (QName name : p.getName().listNames()) {
                     final String ns = name.getNamespaceURI();
-                    if (!Strings.isNullOrEmpty(ns) && !Namespaceable.DEFAULT_NS.equals(ns)) {
+                    if (!Strings.isNullOrEmpty(ns) && !Namespaceable.DEFAULT_NS_STR.equals(ns)) {
                         continue;
                     }
                     references.add(name.getLocalPart());
@@ -138,23 +139,28 @@ public class ContentModel {
             grammar.close();
         }
 
-        final DPattern grammarPattern = (DPattern) new SAXParseable(
-                new InputSource(new StringReader(schema.toString())),
-                XML.STRICT_ERROR_HANDLER
-        ).parse(new DSchemaBuilderImpl());
+        final String grammarStr = schema.toString();
+        try {
+            final DPattern grammarPattern = (DPattern) new SAXParseable(
+                    new InputSource(new StringReader(grammarStr)),
+                    XML.STRICT_ERROR_HANDLER
+            ).parse(new DSchemaBuilderImpl());
 
-        final List<DPattern> root = Lists.newArrayList();
-        grammarPattern.accept(new DPatternWalker() {
-            @Override
-            public Void onRef(DRefPattern p) {
-                final DDefine target = p.getTarget();
-                if (target != null && CONTENT_MODEL_DEF.equals(p.getName())) {
-                    root.add(target.getPattern());
+            final List<DPattern> root = Lists.newArrayList();
+            grammarPattern.accept(new DPatternWalker() {
+                @Override
+                public Void onRef(DRefPattern p) {
+                    final DDefine target = p.getTarget();
+                    if (target != null && CONTENT_MODEL_DEF.equals(p.getName())) {
+                        root.add(target.getPattern());
+                    }
+                    return null;
                 }
-                return null;
-            }
-        });
+            });
 
-        return new ContentModel(grammarPattern, Iterables.getFirst(root, null));
+            return new ContentModel(grammarPattern, Iterables.getFirst(root, null));
+        } catch (BuildException e) {
+            throw new UnsupportedOperationException(grammarStr, e);
+        }
     }
 }

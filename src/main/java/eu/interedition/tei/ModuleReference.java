@@ -19,7 +19,6 @@
 
 package eu.interedition.tei;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import eu.interedition.tei.util.XML;
@@ -35,26 +34,21 @@ public class ModuleReference extends Reference {
     final Set<Reference> included;
     final Set<Reference> excluded;
     final String prefix;
-    final URI url;
 
-    public ModuleReference(String key, URI source, Set<Reference> included, Set<Reference> excluded, String prefix, URI url) {
+    public ModuleReference(String key, URI source, Set<Reference> included, Set<Reference> excluded, String prefix) {
         super(key, source);
         this.included = included;
         this.excluded = excluded;
         this.prefix = prefix;
-        this.url = url;
     }
 
     public static ModuleReference from(StartElement element) {
-        final URI url = XML.toURI(XML.optionalAttributeValue(element, "url"));
-        final String urlStr = (url == null ? null : url.toString());
         return new ModuleReference(
-                Objects.firstNonNull(XML.optionalAttributeValue(element, "key"), urlStr),
+                XML.requiredAttributeValue(element, "key"),
                 XML.toURI(XML.optionalAttributeValue(element, "source")),
                 Sets.newTreeSet(Iterables.transform(Sets.newHashSet(XML.toList(XML.optionalAttributeValue(element, "included"))), Reference.FROM_STRING)),
                 Sets.newTreeSet(Iterables.transform(Sets.newHashSet(XML.toList(XML.optionalAttributeValue(element, "except"))), Reference.FROM_STRING)),
-                XML.optionalAttributeValue(element, "prefix"),
-                url
+                XML.optionalAttributeValue(element, "prefix")
         );
     }
 }

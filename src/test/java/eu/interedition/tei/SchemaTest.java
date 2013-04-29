@@ -19,26 +19,33 @@
 
 package eu.interedition.tei;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.io.PatternFilenameFilter;
 import eu.interedition.tei.util.XML;
-import org.junit.Assert;
 import org.junit.Test;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
-public class SchemaGraphTest {
+public class SchemaTest {
+
+    private static final Logger LOG = Logger.getLogger(SchemaTest.class.getName());
 
     @Test
     public void readSchema() throws Exception {
         final String teiRootPath = System.getProperty("tei.root");
         if (teiRootPath != null) {
-            Assert.assertNotNull(SchemaGraph.read(Schema.read(new File(teiRootPath))));
+            for (Map.Entry<String, String> dep : SpecificationGraph.create(Schema.read(new File(teiRootPath))).specificationDependencies.entries()) {
+                LOG.fine(Joiner.on(" - ").join(dep.getKey(), dep.getValue()));
+            }
         }
     }
 
@@ -49,10 +56,12 @@ public class SchemaGraphTest {
             final File data = new File(dataPath);
             Preconditions.checkArgument(data.isDirectory(), data);
             for (File oddFile : data.listFiles(new PatternFilenameFilter(".+\\.odd$"))) {
-                System.out.println(oddFile);
+                LOG.fine(oddFile.toString());
                 XMLEventReader xml = XML.inputFactory().createXMLEventReader(new StreamSource(oddFile));
                 try {
                     Schema.read(xml);
+                } catch (UnsupportedOperationException e) {
+                    LOG.log(Level.SEVERE, e.getMessage(), e);
                 } finally {
                     xml.close();
                 }

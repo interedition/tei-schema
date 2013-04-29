@@ -22,6 +22,7 @@ package eu.interedition.tei;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.PatternFilenameFilter;
@@ -129,6 +130,9 @@ public class Schema implements Identified, Namespaceable {
                     Preconditions.checkState(schema == null, "Multiple <schemaSpec/> elements");
                     schema = new Schema(element, modules, elements, macros, classes, specifications);
                 } else if (XML.hasName(element, DEFAULT_NS_STR, "moduleRef")) {
+                    if (!Strings.isNullOrEmpty(XML.optionalAttributeValue(element, "url"))) {
+                        throw new UnsupportedOperationException("moduleRef@url");
+                    }
                     modules.add(ModuleReference.from(element));
                 } else if (XML.hasName(element, DEFAULT_NS_STR, "elementRef")) {
                     elements.add(Reference.from(element));

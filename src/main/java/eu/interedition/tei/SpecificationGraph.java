@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
-public class SchemaGraph {
+public class SpecificationGraph {
 
     final Schema schema;
     final Multimap<String, String> moduleMembers = TreeMultimap.create();
@@ -35,24 +35,21 @@ public class SchemaGraph {
     final Multimap<String, String> specificationDependencies = TreeMultimap.create();
     final Multimap<String, String> moduleDependencies = TreeMultimap.create();
 
-    public static SchemaGraph read(Schema schema) {
-        final SchemaGraph graph = new SchemaGraph(schema);
+    public static SpecificationGraph create(Schema schema) {
+        final SpecificationGraph graph = new SpecificationGraph(schema);
 
-        for (Specification specification : graph.schema.specifications.values()) {
+        for (Specification specification : schema.specifications.values()) {
             final String module = specification.getModule();
             if (module != null) {
                 graph.moduleMembers.put(module, specification.getIdent());
             }
-        }
-
-        for (Specification specification : graph.schema.specifications.values()) {
             final String id = specification.getIdent();
             for (String classMembership : specification.classes.keySet()) {
                 graph.classMembers.put(classMembership, id);
             }
         }
 
-        for (Specification spec : graph.schema.specifications.values()) {
+        for (Specification spec : schema.specifications.values()) {
             final String id = spec.getIdent();
             if (Specification.Type.CLASS.equals(spec.getType())) {
                 for (String member : graph.classMembers.get(id)) {
@@ -66,7 +63,7 @@ public class SchemaGraph {
             }
             if (spec.getContent() != null) {
                 for (String ref : spec.getContent().getReferences()) {
-                    if (graph.schema.specifications.containsKey(ref)) {
+                    if (schema.specifications.containsKey(ref)) {
                         final int order = id.compareTo(ref);
                         if (order < 0) {
                             graph.specificationDependencies.put(id, ref);
@@ -79,8 +76,8 @@ public class SchemaGraph {
         }
 
         for (Map.Entry<String, String> dependency : graph.specificationDependencies.entries()) {
-            final String moduleId1 = graph.schema.specifications.get(dependency.getKey()).getModule();
-            final String moduleId2 = graph.schema.specifications.get(dependency.getValue()).getModule();
+            final String moduleId1 = schema.specifications.get(dependency.getKey()).getModule();
+            final String moduleId2 = schema.specifications.get(dependency.getValue()).getModule();
             if (moduleId1 == null || moduleId2 == null) {
                 continue;
             }
@@ -95,7 +92,7 @@ public class SchemaGraph {
         return graph;
     }
 
-    private SchemaGraph(Schema schema) {
+    private SpecificationGraph(Schema schema) {
         this.schema = schema;
     }
 }

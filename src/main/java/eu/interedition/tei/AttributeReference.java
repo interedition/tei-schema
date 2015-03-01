@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 The Interedition Development Group.
+ * Copyright (c) 2015 The Interedition Development Group.
  *
  * This file is part of TEI Schema Tools.
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
+ * along with the project. If not, see <http://www.gnu.org/licenses/>.
  */
 
 package eu.interedition.tei;
@@ -56,7 +56,7 @@ public class AttributeReference implements AttributeNode, Identified, Comparable
     @Override
     public boolean equals(Object obj) {
         if (obj != null && obj instanceof Identified) {
-            return ident.equals(((Identified)obj).getIdent());
+            return ident.equals(((Identified) obj).getIdent());
         }
         return super.equals(obj);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 The Interedition Development Group.
+ * Copyright (c) 2015 The Interedition Development Group.
  *
  * This file is part of TEI Schema Tools.
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
+ * along with the project. If not, see <http://www.gnu.org/licenses/>.
  */
 
 package eu.interedition.tei;
@@ -44,7 +44,7 @@ public class Reference implements Comparable<Reference> {
     public Reference(String key) {
         this(key, null);
     }
-    
+
     public Reference(String key, URI source) {
         this.key = key;
         this.source = source;
@@ -69,7 +69,7 @@ public class Reference implements Comparable<Reference> {
     public int compareTo(Reference o) {
         return COMPARATOR.compare(this, o);
     }
-    
+
     private static final Comparator<Reference> COMPARATOR = Comparator.comparing((Reference r) -> r.key)
             .thenComparing(Comparator.nullsFirst(Comparator.comparing(r -> r.source)));
 }

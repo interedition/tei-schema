@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 The Interedition Development Group.
+ * Copyright (c) 2015 The Interedition Development Group.
  *
  * This file is part of TEI Schema Tools.
  *
@@ -14,17 +14,27 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
+ * along with the project. If not, see <http://www.gnu.org/licenses/>.
  */
 
 package eu.interedition.tei.rng;
 
-import org.kohsuke.rngom.digested.*;
+import org.kohsuke.rngom.digested.DDataPattern;
+import org.kohsuke.rngom.digested.DDefine;
+import org.kohsuke.rngom.digested.DGrammarPattern;
+import org.kohsuke.rngom.digested.DPattern;
+import org.kohsuke.rngom.digested.DPatternWalker;
+import org.kohsuke.rngom.digested.DRefPattern;
+import org.kohsuke.rngom.digested.DXmlTokenPattern;
 import org.kohsuke.rngom.nc.NameClass;
 import org.kohsuke.rngom.nc.NameClassVisitor;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -44,7 +54,7 @@ public class NamespaceCollector extends DPatternWalker implements NameClassVisit
     }
 
     public Map<String, String> toMapping(Map<String, String> initial) {
-        final Map<String,String> mapping = new HashMap<>(initial);
+        final Map<String, String> mapping = new HashMap<>(initial);
         int i = 0;
         for (String ns : namespaces) {
             if (!mapping.containsKey(ns)) {

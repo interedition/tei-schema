@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 The Interedition Development Group.
+ * Copyright (c) 2015 The Interedition Development Group.
  *
  * This file is part of TEI Schema Tools.
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
+ * along with the project. If not, see <http://www.gnu.org/licenses/>.
  */
 
 package eu.interedition.tei.util;
@@ -33,7 +33,11 @@ import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import java.net.URI;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -50,6 +54,7 @@ public class XML {
         return () -> new Iterator<Node>() {
 
             private int nc = 0;
+
             @Override
             public boolean hasNext() {
                 return nc < length;

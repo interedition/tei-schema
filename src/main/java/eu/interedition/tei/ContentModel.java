@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 The Interedition Development Group.
+ * Copyright (c) 2015 The Interedition Development Group.
  *
  * This file is part of TEI Schema Tools.
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
+ * along with the project. If not, see <http://www.gnu.org/licenses/>.
  */
 
 package eu.interedition.tei;
@@ -41,7 +41,12 @@ import javax.xml.stream.events.XMLEvent;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static org.kohsuke.rngom.xml.util.WellKnownNamespaces.RELAX_NG;
 

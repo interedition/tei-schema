@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 The Interedition Development Group.
+ * Copyright (c) 2015 The Interedition Development Group.
  *
  * This file is part of TEI Schema Tools.
  *
@@ -14,12 +14,31 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
+ * along with the project. If not, see <http://www.gnu.org/licenses/>.
  */
 
 package eu.interedition.tei.rng;
 
-import org.kohsuke.rngom.digested.*;
+import org.kohsuke.rngom.digested.DAttributePattern;
+import org.kohsuke.rngom.digested.DChoicePattern;
+import org.kohsuke.rngom.digested.DDataPattern;
+import org.kohsuke.rngom.digested.DDefine;
+import org.kohsuke.rngom.digested.DElementPattern;
+import org.kohsuke.rngom.digested.DEmptyPattern;
+import org.kohsuke.rngom.digested.DGrammarPattern;
+import org.kohsuke.rngom.digested.DGroupPattern;
+import org.kohsuke.rngom.digested.DInterleavePattern;
+import org.kohsuke.rngom.digested.DListPattern;
+import org.kohsuke.rngom.digested.DMixedPattern;
+import org.kohsuke.rngom.digested.DNotAllowedPattern;
+import org.kohsuke.rngom.digested.DOneOrMorePattern;
+import org.kohsuke.rngom.digested.DOptionalPattern;
+import org.kohsuke.rngom.digested.DPattern;
+import org.kohsuke.rngom.digested.DPatternVisitor;
+import org.kohsuke.rngom.digested.DRefPattern;
+import org.kohsuke.rngom.digested.DTextPattern;
+import org.kohsuke.rngom.digested.DValuePattern;
+import org.kohsuke.rngom.digested.DZeroOrMorePattern;
 import org.kohsuke.rngom.nc.NameClass;
 import org.kohsuke.rngom.nc.NameClassVisitor;
 import org.kohsuke.rngom.xml.util.WellKnownNamespaces;
@@ -28,7 +47,13 @@ import javax.xml.namespace.QName;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
@@ -230,7 +255,7 @@ public class RelaxCompactSerializer implements DPatternVisitor<Void>, NameClassV
             if (library.isEmpty() || WellKnownNamespaces.XML_SCHEMA_DATATYPES.equals(library)) {
                 target.print("xsd:");
             } else {
-               throw new UnsupportedOperationException(library);
+                throw new UnsupportedOperationException(library);
             }
             target.print(type);
         }

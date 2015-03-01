@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 The Interedition Development Group.
+ * Copyright (c) 2015 The Interedition Development Group.
  *
  * This file is part of TEI Schema Tools.
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
+ * along with the project. If not, see <http://www.gnu.org/licenses/>.
  */
 
 package eu.interedition.tei;
@@ -31,7 +31,11 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import javax.xml.transform.TransformerException;
 import java.net.URI;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 
 /**
@@ -194,7 +198,7 @@ public class Specification implements Identified, Namespaceable, Combinable {
     static boolean isSpecificationElement(QName name) {
         if (DEFAULT_NS_STR.equals(name.getNamespaceURI())) {
             final String localName = name.getLocalPart();
-            return ("elementSpec".equals(localName) ||  "classSpec".equals(localName) || "macroSpec".equals(localName));
+            return ("elementSpec".equals(localName) || "classSpec".equals(localName) || "macroSpec".equals(localName));
         }
         return false;
     }

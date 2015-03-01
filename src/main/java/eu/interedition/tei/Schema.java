@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 The Interedition Development Group.
+ * Copyright (c) 2015 The Interedition Development Group.
  *
  * This file is part of TEI Schema Tools.
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CollateX.  If not, see <http://www.gnu.org/licenses/>.
+ * along with the project. If not, see <http://www.gnu.org/licenses/>.
  */
 
 package eu.interedition.tei;
@@ -32,7 +32,14 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 import java.net.URI;
 import java.time.Duration;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -57,7 +64,7 @@ public class Schema implements Identified, Namespaceable {
         final File specs = new File(sourceRoot, "Specs");
         final File guidelines = new File(sourceRoot, "Guidelines/en");
 
-        for (File dir : new File[] { specs, guidelines}) {
+        for (File dir : new File[]{specs, guidelines}) {
             if (!dir.isDirectory()) {
                 throw new IllegalArgumentException(dir + " is not a directory");
             }

@@ -19,10 +19,6 @@
 
 package eu.interedition.tei;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import eu.interedition.tei.util.LocalizedStrings;
 import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
@@ -35,8 +31,7 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import javax.xml.transform.TransformerException;
 import java.net.URI;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -64,7 +59,7 @@ public class Specification implements Identified, Namespaceable, Combinable {
 
         final LocalizedStrings descriptions = new LocalizedStrings();
         final LocalizedStrings altIdents = new LocalizedStrings();
-        final Map<String, EditOperation> classes = Maps.newHashMap();
+        final Map<String, EditOperation> classes = new HashMap<>();
         EditOperation classesEditOperation = null;
         AttributeList attributeList = null;
         ContentModel contentModel = null;
@@ -99,7 +94,7 @@ public class Specification implements Identified, Namespaceable, Combinable {
                 altIdents,
                 classesEditOperation,
                 classes,
-                Objects.firstNonNull(attributeList, new AttributeList(false)),
+                Optional.ofNullable(attributeList).orElse(new AttributeList(false)),
                 contentModel
         );
     }
@@ -113,7 +108,7 @@ public class Specification implements Identified, Namespaceable, Combinable {
         this.content = content;
         this.ident = XML.requiredAttributeValue(specElement, "ident");
         this.module = XML.optionalAttributeValue(specElement, "module");
-        this.namespace = Objects.firstNonNull(XML.toURI(XML.optionalAttributeValue(specElement, "ns")), DEFAULT_NS);
+        this.namespace = Optional.ofNullable(XML.toURI(XML.optionalAttributeValue(specElement, "ns"))).orElse(DEFAULT_NS);
         this.type = Type.from(specElement.getName().getLocalPart());
         this.specType = XML.optionalAttributeValue(specElement, "type");
         this.editOperation = Combinable.EditOperation.from(specElement);
@@ -172,11 +167,11 @@ public class Specification implements Identified, Namespaceable, Combinable {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this).addValue(ident).toString();
+        return "Specification[" + ident + "]";
     }
 
     public static Set<Specification> read(XMLEventReader xml) throws XMLStreamException, TransformerException, IllegalSchemaException {
-        final Set<Specification> specifications = Sets.newHashSet();
+        final Set<Specification> specifications = new HashSet<>();
         while (xml.hasNext()) {
             final XMLEvent event = xml.nextEvent();
             if (event.isStartElement()) {
@@ -217,15 +212,6 @@ public class Specification implements Identified, Namespaceable, Combinable {
             } else {
                 throw new IllegalArgumentException(localName);
             }
-        }
-
-        public Predicate<Specification> predicate() {
-            return new Predicate<Specification>() {
-                @Override
-                public boolean apply(Specification input) {
-                    return Type.this.equals(input.getType());
-                }
-            };
         }
     }
 }

@@ -19,14 +19,12 @@
 
 package eu.interedition.tei;
 
-import com.google.common.base.Function;
-import com.google.common.base.Objects;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Ordering;
 import eu.interedition.tei.util.XML;
 
 import javax.xml.stream.events.StartElement;
 import java.net.URI;
+import java.util.Comparator;
+import java.util.Objects;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -43,6 +41,10 @@ public class Reference implements Comparable<Reference> {
         );
     }
 
+    public Reference(String key) {
+        this(key, null);
+    }
+    
     public Reference(String key, URI source) {
         this.key = key;
         this.source = source;
@@ -51,27 +53,23 @@ public class Reference implements Comparable<Reference> {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(key, source);
+        return Objects.hash(key, source);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj != null && obj instanceof Reference) {
             Reference other = (Reference) obj;
-            return Objects.equal(key, other.key) && Objects.equal(source, other.source);
+            return Objects.equals(key, other.key) && Objects.equals(source, other.source);
         }
         return super.equals(obj);
     }
 
     @Override
     public int compareTo(Reference o) {
-        return ComparisonChain.start().compare(key, o.key).compare(source, o.source, Ordering.natural().nullsFirst()).result();
+        return COMPARATOR.compare(this, o);
     }
-
-    public static final Function<String, Reference> FROM_STRING = new Function<String, Reference>() {
-        @Override
-        public Reference apply(String input) {
-            return new Reference(input, null);
-        }
-    };
+    
+    private static final Comparator<Reference> COMPARATOR = Comparator.comparing((Reference r) -> r.key)
+            .thenComparing(Comparator.nullsFirst(Comparator.comparing(r -> r.source)));
 }

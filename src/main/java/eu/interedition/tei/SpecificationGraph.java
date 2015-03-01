@@ -19,10 +19,10 @@
 
 package eu.interedition.tei;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.TreeMultimap;
-
-import java.util.Map;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -30,10 +30,10 @@ import java.util.Map;
 public class SpecificationGraph {
 
     final Schema schema;
-    final Multimap<String, String> moduleMembers = TreeMultimap.create();
-    final Multimap<String, String> classMembers = TreeMultimap.create();
-    final Multimap<String, String> specificationDependencies = TreeMultimap.create();
-    final Multimap<String, String> moduleDependencies = TreeMultimap.create();
+    final SortedMap<String, SortedSet<String>> moduleMembers = new TreeMap<>();
+    final SortedMap<String, SortedSet<String>> classMembers = new TreeMap<>();
+    final SortedMap<String, SortedSet<String>> specificationDependencies = new TreeMap<>();
+    final SortedMap<String, SortedSet<String>> moduleDependencies = new TreeMap<>();
 
     public static SpecificationGraph create(Schema schema) {
         final SpecificationGraph graph = new SpecificationGraph(schema);
@@ -41,11 +41,11 @@ public class SpecificationGraph {
         for (Specification specification : schema.specifications.values()) {
             final String module = specification.getModule();
             if (module != null) {
-                graph.moduleMembers.put(module, specification.getIdent());
+                graph.moduleMembers.computeIfAbsent(module, m -> new TreeSet<>()).add(specification.getIdent());
             }
             final String id = specification.getIdent();
             for (String classMembership : specification.classes.keySet()) {
-                graph.classMembers.put(classMembership, id);
+                graph.classMembers.computeIfAbsent(classMembership, m -> new TreeSet<>()).add(id);
             }
         }
 
@@ -55,9 +55,9 @@ public class SpecificationGraph {
                 for (String member : graph.classMembers.get(id)) {
                     final int order = id.compareTo(member);
                     if (order < 0) {
-                        graph.specificationDependencies.put(id, member);
+                        graph.specificationDependencies.computeIfAbsent(id, k -> new TreeSet<>()).add(member);
                     } else if (order > 0) {
-                        graph.specificationDependencies.put(member, id);
+                        graph.specificationDependencies.computeIfAbsent(id, k -> new TreeSet<>()).add(id);
                     }
                 }
             }
@@ -66,28 +66,33 @@ public class SpecificationGraph {
                     if (schema.specifications.containsKey(ref)) {
                         final int order = id.compareTo(ref);
                         if (order < 0) {
-                            graph.specificationDependencies.put(id, ref);
+                            graph.specificationDependencies.computeIfAbsent(id, k -> new TreeSet<>()).add(ref);
                         } else if (order > 0) {
-                            graph.specificationDependencies.put(ref, id);
+                            graph.specificationDependencies.computeIfAbsent(ref, k -> new TreeSet<>()).add(id);
                         }
                     }
                 }
             }
         }
 
-        for (Map.Entry<String, String> dependency : graph.specificationDependencies.entries()) {
-            final String moduleId1 = schema.specifications.get(dependency.getKey()).getModule();
-            final String moduleId2 = schema.specifications.get(dependency.getValue()).getModule();
-            if (moduleId1 == null || moduleId2 == null) {
-                continue;
+        graph.specificationDependencies.forEach((id, dependencies) -> {
+            final String moduleId1 = schema.specifications.get(id).getModule();
+            if (moduleId1 == null) {
+                return;
             }
-            final int order = moduleId1.compareTo(moduleId2);
-            if (order < 0) {
-                graph.moduleDependencies.put(moduleId1, moduleId2);
-            } else if (order > 0) {
-                graph.moduleDependencies.put(moduleId2, moduleId1);
-            }
-        }
+            dependencies.forEach(dependency -> {
+                final String moduleId2 = schema.specifications.get(dependency).getModule();
+                if (moduleId2 == null) {
+                    return;
+                }
+                final int order = moduleId1.compareTo(moduleId2);
+                if (order < 0) {
+                    graph.moduleDependencies.computeIfAbsent(moduleId1, k -> new TreeSet<>()).add(moduleId2);
+                } else if (order > 0) {
+                    graph.moduleDependencies.computeIfAbsent(moduleId2, k -> new TreeSet<>()).add(moduleId1);
+                }
+            });
+        });
 
         return graph;
     }

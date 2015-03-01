@@ -19,11 +19,6 @@
 
 package eu.interedition.tei;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Ordering;
-
-import java.util.Comparator;
-
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
@@ -32,19 +27,5 @@ public interface Identified {
     String getIdent();
 
     String getModule();
-
-    final Function<Identified,String> TO_ID = new Function<Identified, String>() {
-        @Override
-        public String apply(Identified input) {
-            return input.getIdent();
-        }
-    };
-
-    final Ordering<Identified> ORDERING = Ordering.from(new Comparator<Identified>() {
-        @Override
-        public int compare(Identified o1, Identified o2) {
-            return o1.getIdent().compareTo(o2.getIdent());
-        }
-    });
 
 }

@@ -19,13 +19,6 @@
 
 package eu.interedition.tei;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.io.PatternFilenameFilter;
 import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
 
@@ -38,9 +31,8 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 import java.net.URI;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.time.Duration;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -65,27 +57,29 @@ public class Schema implements Identified, Namespaceable {
         final File specs = new File(sourceRoot, "Specs");
         final File guidelines = new File(sourceRoot, "Guidelines/en");
 
-        Preconditions.checkArgument(specs.isDirectory(), specs + " is not a directory");
-        Preconditions.checkArgument(guidelines.isDirectory(), guidelines + " is not a directory");
+        for (File dir : new File[] { specs, guidelines}) {
+            if (!dir.isDirectory()) {
+                throw new IllegalArgumentException(dir + " is not a directory");
+            }
+        }
 
         if (LOG.isLoggable(Level.FINE)) {
             LOG.log(Level.FINE, "Reading TEI schema from {0}", sourceRoot);
         }
 
-        final Stopwatch stopwatch = new Stopwatch().start();
+        final long start = System.currentTimeMillis();
 
-        final Map<String, Specification> specifications = Maps.newHashMap();
+        final Map<String, Specification> specifications = new HashMap<>();
         final XMLInputFactory xmlInputFactory = XML.inputFactory();
 
-        for (final File specFile : specs.listFiles(new PatternFilenameFilter(".+\\.xml$"))) {
+        for (final File specFile : specs.listFiles((dir, name) -> name.endsWith(".xml"))) {
             final XMLEventReader xml = xmlInputFactory.createXMLEventReader(new StreamSource(specFile));
             try {
                 for (Specification specification : Specification.read(xml)) {
                     final String id = specification.getIdent();
-                    Preconditions.checkState(
-                            specifications.put(id, specification) == null,
-                            id + " is not a unique identifier"
-                    );
+                    if (specifications.put(id, specification) != null) {
+                        throw new IllegalStateException(id + " is not a unique identifier");
+                    }
                 }
             } finally {
                 xml.close();
@@ -96,14 +90,14 @@ public class Schema implements Identified, Namespaceable {
             LOG.log(Level.FINE, "Read {0} specification(s) from {1} in {2}", new Object[]{
                     specifications.size(),
                     sourceRoot,
-                    stopwatch.stop()
+                    Duration.ofMillis(System.currentTimeMillis() - start)
             });
         }
 
         return new Schema(
                 "all",
                 "tei_",
-                Sets.newHashSet("TEI", "teiCorpus"),
+                new HashSet<>(Arrays.asList("TEI", "teiCorpus")),
                 Namespaceable.DEFAULT_NS,
                 Collections.<ModuleReference>emptySet(),
                 Collections.<Reference>emptySet(),
@@ -116,21 +110,23 @@ public class Schema implements Identified, Namespaceable {
     public static Schema read(XMLEventReader xml) throws XMLStreamException, IllegalSchemaException {
         Schema schema = null;
 
-        final Map<String, Specification> specifications = Maps.newHashMap();
-        final Set<ModuleReference> modules = Sets.newTreeSet();
-        final Set<Reference> elements = Sets.newTreeSet();
-        final Set<Reference> macros = Sets.newTreeSet();
-        final Set<Reference> classes = Sets.newTreeSet();
+        final Map<String, Specification> specifications = new HashMap<>();
+        final Set<ModuleReference> modules = new TreeSet<>();
+        final Set<Reference> elements = new TreeSet<>();
+        final Set<Reference> macros = new TreeSet<>();
+        final Set<Reference> classes = new TreeSet<>();
         while (xml.hasNext()) {
             final XMLEvent event = xml.nextEvent();
 
             if (event.isStartElement()) {
                 final StartElement element = event.asStartElement();
                 if (XML.hasName(element, DEFAULT_NS_STR, "schemaSpec")) {
-                    Preconditions.checkState(schema == null, "Multiple <schemaSpec/> elements");
+                    if (schema != null) {
+                        throw new IllegalStateException("Multiple <schemaSpec/> elements");
+                    }
                     schema = new Schema(element, modules, elements, macros, classes, specifications);
                 } else if (XML.hasName(element, DEFAULT_NS_STR, "moduleRef")) {
-                    if (!Strings.isNullOrEmpty(XML.optionalAttributeValue(element, "url"))) {
+                    if (Optional.ofNullable(XML.optionalAttributeValue(element, "url")).filter(s -> !s.isEmpty()).isPresent()) {
                         throw new UnsupportedOperationException("moduleRef@url");
                     }
                     modules.add(ModuleReference.from(element));
@@ -182,7 +178,7 @@ public class Schema implements Identified, Namespaceable {
                    Set<Reference> classes,
                    Map<String, Specification> specifications) {
         this.ident = ident;
-        this.namespace = Objects.firstNonNull(namespace, DEFAULT_NS);
+        this.namespace = Optional.ofNullable(namespace).orElse(DEFAULT_NS);
         this.prefix = prefix;
         this.start = start;
         this.modules = modules;
@@ -201,7 +197,7 @@ public class Schema implements Identified, Namespaceable {
         this(
                 XML.optionalAttributeValue(element, "ident"),
                 XML.optionalAttributeValue(element, "prefix"),
-                Sets.newHashSet(XML.toList(XML.optionalAttributeValue(element, "start"))),
+                new HashSet<>(XML.toList(XML.optionalAttributeValue(element, "start"))),
                 XML.toURI(XML.optionalAttributeValue(element, "ns")),
                 modules,
                 elements,

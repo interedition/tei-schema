@@ -19,7 +19,6 @@
 
 package eu.interedition.tei;
 
-import com.google.common.base.Objects;
 import eu.interedition.tei.util.LocalizedStrings;
 import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
@@ -29,6 +28,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.util.ArrayList;
+import java.util.Optional;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -53,7 +53,7 @@ public class Values extends ArrayList<Values.Item> implements Combinable {
 
     public static Values parse(StartElement valList, XMLEventReader xml) throws XMLStreamException, IllegalSchemaException {
         final Values values = new Values(
-                Objects.firstNonNull(Type.from(XML.optionalAttributeValue(valList, "type")), Type.OPEN),
+                Optional.ofNullable(Type.from(XML.optionalAttributeValue(valList, "type"))).orElse(Type.OPEN),
                 Combinable.EditOperation.from(valList)
         );
 

@@ -19,11 +19,6 @@
 
 package eu.interedition.tei;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import eu.interedition.tei.rng.RelaxCompactSerializer;
 import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.ast.builder.BuildException;
@@ -46,9 +41,7 @@ import javax.xml.stream.events.XMLEvent;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.Collections;
-import java.util.List;
-import java.util.SortedSet;
+import java.util.*;
 
 import static org.kohsuke.rngom.xml.util.WellKnownNamespaces.RELAX_NG;
 
@@ -67,13 +60,13 @@ public class ContentModel {
     }
 
     public SortedSet<String> getReferences() {
-        final SortedSet<String> references = Sets.newTreeSet();
-        Objects.firstNonNull(root, grammar).accept(new DPatternWalker() {
+        final SortedSet<String> references = new TreeSet<>();
+        Optional.ofNullable(root).orElse(grammar).accept(new DPatternWalker() {
             @Override
             public Void onElement(DElementPattern p) {
                 for (QName name : p.getName().listNames()) {
                     final String ns = name.getNamespaceURI();
-                    if (!Strings.isNullOrEmpty(ns) && !Namespaceable.DEFAULT_NS_STR.equals(ns)) {
+                    if (ns != null && !ns.isEmpty() && !Namespaceable.DEFAULT_NS_STR.equals(ns)) {
                         continue;
                     }
                     references.add(name.getLocalPart());
@@ -99,7 +92,7 @@ public class ContentModel {
 
     @Override
     public String toString() {
-        return RelaxCompactSerializer.toString(Objects.firstNonNull(root, grammar));
+        return RelaxCompactSerializer.toString(Optional.ofNullable(root).orElse(grammar));
     }
 
     public static ContentModel parse(XMLEventReader xml, String containerName) throws XMLStreamException, IllegalSchemaException {
@@ -146,7 +139,7 @@ public class ContentModel {
                     XML.STRICT_ERROR_HANDLER
             ).parse(new DSchemaBuilderImpl());
 
-            final List<DPattern> root = Lists.newArrayList();
+            final List<DPattern> root = new ArrayList<>();
             grammarPattern.accept(new DPatternWalker() {
                 @Override
                 public Void onRef(DRefPattern p) {
@@ -158,7 +151,7 @@ public class ContentModel {
                 }
             });
 
-            return new ContentModel(grammarPattern, Iterables.getFirst(root, null));
+            return new ContentModel(grammarPattern, root.stream().findFirst().orElse(null));
         } catch (BuildException e) {
             throw new UnsupportedOperationException(grammarStr, e);
         }

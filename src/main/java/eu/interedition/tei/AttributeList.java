@@ -19,7 +19,6 @@
 
 package eu.interedition.tei;
 
-import com.google.common.base.Objects;
 import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
 
@@ -29,6 +28,7 @@ import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.util.ArrayList;
+import java.util.Optional;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -38,7 +38,7 @@ public class AttributeList extends ArrayList<AttributeNode> implements Attribute
     final boolean alternative;
 
     public AttributeList(StartElement element) {
-        this("choice".equals(Objects.firstNonNull(XML.optionalAttributeValue(element, "org"), "")));
+        this("choice".equals(Optional.ofNullable(XML.optionalAttributeValue(element, "org")).orElse("")));
     }
 
     public AttributeList(boolean alternative) {

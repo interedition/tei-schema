@@ -19,18 +19,16 @@
 
 package eu.interedition.tei;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.io.PatternFilenameFilter;
 import eu.interedition.tei.util.XML;
 import org.junit.Test;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -43,9 +41,9 @@ public class SchemaTest {
     public void readSchema() throws Exception {
         final String teiRootPath = System.getProperty("tei.root");
         if (teiRootPath != null) {
-            for (Map.Entry<String, String> dep : SpecificationGraph.create(Schema.read(new File(teiRootPath))).specificationDependencies.entries()) {
-                LOG.fine(Joiner.on(" - ").join(dep.getKey(), dep.getValue()));
-            }
+            SpecificationGraph.create(Schema.read(new File(teiRootPath)))
+                    .specificationDependencies
+                    .forEach((id, dependencies) -> LOG.fine(() -> Stream.of(id, dependencies).map(Object::toString).collect(Collectors.joining(" - "))));
         }
     }
 
@@ -54,8 +52,10 @@ public class SchemaTest {
         final String dataPath = System.getProperty("tei.data");
         if (dataPath != null) {
             final File data = new File(dataPath);
-            Preconditions.checkArgument(data.isDirectory(), data);
-            for (File oddFile : data.listFiles(new PatternFilenameFilter(".+\\.odd$"))) {
+            if (!data.isDirectory()) {
+                throw new IllegalArgumentException(data.toString());
+            }
+            for (File oddFile : data.listFiles((dir, name) -> name.endsWith(".odd"))) {
                 LOG.fine(oddFile.toString());
                 XMLEventReader xml = XML.inputFactory().createXMLEventReader(new StreamSource(oddFile));
                 try {

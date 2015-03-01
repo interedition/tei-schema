@@ -19,66 +19,38 @@
 
 package eu.interedition.tei.rng;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
-import org.kohsuke.rngom.digested.DAttributePattern;
-import org.kohsuke.rngom.digested.DChoicePattern;
-import org.kohsuke.rngom.digested.DDataPattern;
-import org.kohsuke.rngom.digested.DDefine;
-import org.kohsuke.rngom.digested.DElementPattern;
-import org.kohsuke.rngom.digested.DEmptyPattern;
-import org.kohsuke.rngom.digested.DGrammarPattern;
-import org.kohsuke.rngom.digested.DGroupPattern;
-import org.kohsuke.rngom.digested.DInterleavePattern;
-import org.kohsuke.rngom.digested.DListPattern;
-import org.kohsuke.rngom.digested.DMixedPattern;
-import org.kohsuke.rngom.digested.DNotAllowedPattern;
-import org.kohsuke.rngom.digested.DOneOrMorePattern;
-import org.kohsuke.rngom.digested.DOptionalPattern;
-import org.kohsuke.rngom.digested.DPattern;
-import org.kohsuke.rngom.digested.DPatternVisitor;
-import org.kohsuke.rngom.digested.DRefPattern;
-import org.kohsuke.rngom.digested.DTextPattern;
-import org.kohsuke.rngom.digested.DValuePattern;
-import org.kohsuke.rngom.digested.DZeroOrMorePattern;
+import org.kohsuke.rngom.digested.*;
 import org.kohsuke.rngom.nc.NameClass;
 import org.kohsuke.rngom.nc.NameClassVisitor;
 import org.kohsuke.rngom.xml.util.WellKnownNamespaces;
 
 import javax.xml.namespace.QName;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
 public class RelaxCompactSerializer implements DPatternVisitor<Void>, NameClassVisitor<Void> {
 
-    private final Set<String> KEYWORDS = Sets.newHashSet("attribute", "default", "datatypes", "div", "element", "empty",
+    @SuppressWarnings("SpellCheckingInspection")
+    private final Set<String> KEYWORDS = new HashSet<>(Arrays.asList("attribute", "default", "datatypes", "div", "element", "empty",
             "external", "grammar", "include", "inherit", "list", "mixed", "namespace", "notAllowed", "parent", "start",
-            "string", "text", "token");
+            "string", "text", "token"));
 
-    protected final PrintWriter target;
-    protected BiMap<String, String> namespaces = HashBiMap.create();
+    private final PrintWriter target;
+    private Map<String, String> namespaces = new HashMap<>();
 
     public RelaxCompactSerializer(PrintWriter target) {
         this.target = target;
     }
 
     public RelaxCompactSerializer(Writer target) {
-        this(new PrintWriter(target));
-    }
-
-    public RelaxCompactSerializer(OutputStream target) {
         this(new PrintWriter(target));
     }
 
@@ -229,7 +201,7 @@ public class RelaxCompactSerializer implements DPatternVisitor<Void>, NameClassV
 
     @Override
     public Void onData(DDataPattern p) {
-        datatype(p.getDatatypeLibrary(), p.getType());
+        dataType(p.getDatatypeLibrary(), p.getType());
 
         final List<DDataPattern.Param> params = p.getParams();
         if (!params.isEmpty()) {
@@ -253,7 +225,7 @@ public class RelaxCompactSerializer implements DPatternVisitor<Void>, NameClassV
         return null;
     }
 
-    private void datatype(String library, String type) {
+    private void dataType(String library, String type) {
         if (type != null) {
             if (library.isEmpty() || WellKnownNamespaces.XML_SCHEMA_DATATYPES.equals(library)) {
                 target.print("xsd:");
@@ -266,7 +238,7 @@ public class RelaxCompactSerializer implements DPatternVisitor<Void>, NameClassV
 
     @Override
     public Void onValue(DValuePattern p) {
-        datatype(p.getDatatypeLibrary(), p.getType());
+        dataType(p.getDatatypeLibrary(), p.getType());
         target.print(" ");
         literal(p.getValue());
         return null;
@@ -347,7 +319,8 @@ public class RelaxCompactSerializer implements DPatternVisitor<Void>, NameClassV
             throw new UnsupportedOperationException("FIXME Literal: " + value);
         }
 
-        final String delimiter = Strings.repeat(singleQuotes ? "\"" : "'", value.indexOf("\n") >= 0 ? 3 : 1);
+        final String quote = (singleQuotes ? "\"" : "'");
+        final String delimiter = IntStream.range(0, value.contains("\n") ? 3 : 1).mapToObj(i -> quote).collect(Collectors.joining());
         target.print(delimiter);
         target.print(value);
         target.print(delimiter);
@@ -355,7 +328,7 @@ public class RelaxCompactSerializer implements DPatternVisitor<Void>, NameClassV
 
 
     protected void concat(Iterable<DPattern> patterns, String op) {
-        final int numPatterns = Iterables.size(patterns);
+        final long numPatterns = StreamSupport.stream(patterns.spliterator(), false).count();
         if (numPatterns > 1) {
             target.print("(");
         }

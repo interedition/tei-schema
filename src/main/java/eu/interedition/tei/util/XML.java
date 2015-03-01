@@ -19,11 +19,6 @@
 
 package eu.interedition.tei.util;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Iterables;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -32,113 +27,59 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerFactory;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
 public class XML {
 
-    private static DocumentBuilderFactory documentBuilderFactory;
-    private static TransformerFactory transformerFactory;
-    private static SAXParserFactory saxParserFactory;
     private static XMLOutputFactory xmlOutputFactory;
     private static XMLInputFactory xmlInputFactory;
 
-    public static SAXParser saxParser() {
-        try {
-            if (saxParserFactory == null) {
-                saxParserFactory = SAXParserFactory.newInstance();
-                saxParserFactory.setNamespaceAware(true);
-                saxParserFactory.setValidating(false);
-            }
-            return saxParserFactory.newSAXParser();
-        } catch (ParserConfigurationException e) {
-            throw Throwables.propagate(e);
-        } catch (SAXException e) {
-            throw Throwables.propagate(e);
-        }
-    }
-
-    public static DocumentBuilderFactory documentBuilderFactory() {
-        if (documentBuilderFactory == null) {
-            documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            documentBuilderFactory.setNamespaceAware(true);
-            documentBuilderFactory.setValidating(false);
-        }
-        return documentBuilderFactory;
-    }
-
-    public static DocumentBuilder newDocumentBuilder() {
-        try {
-            return documentBuilderFactory().newDocumentBuilder();
-        } catch (ParserConfigurationException e) {
-            throw Throwables.propagate(e);
-        }
-    }
-
-    public static TransformerFactory transformerFactory() {
-        if (transformerFactory == null) {
-            transformerFactory = TransformerFactory.newInstance();
-        }
-        return transformerFactory;
-    }
-
-    public static Transformer newTransformer() {
-        try {
-            return transformerFactory().newTransformer();
-        } catch (TransformerConfigurationException e) {
-            throw Throwables.propagate(e);
-        }
-    }
-
     public static Iterable<Node> nodes(final NodeList nodeList) {
-        return new Iterable<Node>() {
-            @Override
-            public Iterator<Node> iterator() {
-                return new AbstractIterator<Node>() {
-                    private int nc = -1;
+        final int length = nodeList.getLength();
+        return () -> new Iterator<Node>() {
 
-                    @Override
-                    protected Node computeNext() {
-                        return (++nc < nodeList.getLength() ? nodeList.item(nc) : endOfData());
-                    }
-                };
+            private int nc = 0;
+            @Override
+            public boolean hasNext() {
+                return nc < length;
+            }
+
+            @Override
+            public Node next() {
+                return nodeList.item(nc++);
             }
         };
     }
 
     public static Iterable<Element> elements(final NodeList nodeList) {
-        return Iterables.filter(nodes(nodeList), Element.class);
+        return StreamSupport.stream(nodes(nodeList).spliterator(), false)
+                .filter(n -> n.getNodeType() == Node.ELEMENT_NODE)
+                .map(n -> (Element) n)
+                .collect(Collectors.toList());
     }
 
     public static String requiredAttributeValue(Element element, String qname) {
-        return Preconditions.checkNotNull(Strings.emptyToNull(element.getAttribute(qname)));
+        return Objects.requireNonNull(Optional.of(element.getAttribute(qname)).filter(s -> !s.isEmpty()).orElse(null));
     }
 
     public static String requiredAttributeValue(StartElement element, String attributeName) {
-        return Preconditions.checkNotNull(optionalAttributeValue(element, attributeName));
+        return Objects.requireNonNull(optionalAttributeValue(element, attributeName));
     }
 
     public static String optionalAttributeValue(StartElement element, String attributeName) {
         final Attribute attribute = element.getAttributeByName(new QName(attributeName));
-        return Strings.emptyToNull(attribute == null ? "" : attribute.getValue());
+        return Optional.ofNullable(attribute).map(Attribute::getValue).filter(s -> !s.isEmpty()).orElse(null);
     }
 
     public static XMLOutputFactory outputFactory() {
@@ -190,10 +131,10 @@ public class XML {
     }
 
     public static URI toURI(String str) {
-        return (Strings.isNullOrEmpty(str) ? null : URI.create(str));
+        return (str == null || str.isEmpty() ? null : URI.create(str));
     }
 
     public static List<String> toList(String str) {
-        return Arrays.asList(Strings.nullToEmpty(str).trim().split("\\s+"));
+        return Arrays.asList(Optional.ofNullable(str).orElse("").split("\\s+"));
     }
 }

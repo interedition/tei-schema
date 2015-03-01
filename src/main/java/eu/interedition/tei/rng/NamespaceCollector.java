@@ -19,30 +19,19 @@
 
 package eu.interedition.tei.rng;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Sets;
-import org.kohsuke.rngom.digested.DDataPattern;
-import org.kohsuke.rngom.digested.DDefine;
-import org.kohsuke.rngom.digested.DGrammarPattern;
-import org.kohsuke.rngom.digested.DPattern;
-import org.kohsuke.rngom.digested.DPatternWalker;
-import org.kohsuke.rngom.digested.DRefPattern;
-import org.kohsuke.rngom.digested.DXmlTokenPattern;
+import org.kohsuke.rngom.digested.*;
 import org.kohsuke.rngom.nc.NameClass;
 import org.kohsuke.rngom.nc.NameClassVisitor;
 
 import javax.xml.namespace.QName;
-import java.util.Collections;
-import java.util.Map;
-import java.util.SortedSet;
+import java.util.*;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
 public class NamespaceCollector extends DPatternWalker implements NameClassVisitor<Object> {
 
-    protected final SortedSet<String> namespaces = Sets.newTreeSet();
+    protected final SortedSet<String> namespaces = new TreeSet<>();
 
     public static NamespaceCollector on(DPattern pattern) {
         final NamespaceCollector namespaceCollector = new NamespaceCollector();
@@ -50,12 +39,12 @@ public class NamespaceCollector extends DPatternWalker implements NameClassVisit
         return namespaceCollector;
     }
 
-    public BiMap<String, String> toMapping() {
+    public Map<String, String> toMapping() {
         return toMapping(Collections.<String, String>emptyMap());
     }
 
-    public BiMap<String, String> toMapping(Map<String, String> initial) {
-        final BiMap<String,String> mapping = HashBiMap.create(initial);
+    public Map<String, String> toMapping(Map<String, String> initial) {
+        final Map<String,String> mapping = new HashMap<>(initial);
         int i = 0;
         for (String ns : namespaces) {
             if (!mapping.containsKey(ns)) {

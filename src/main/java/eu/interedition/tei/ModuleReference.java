@@ -19,13 +19,13 @@
 
 package eu.interedition.tei;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import eu.interedition.tei.util.XML;
 
 import javax.xml.stream.events.StartElement;
 import java.net.URI;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -46,8 +46,8 @@ public class ModuleReference extends Reference {
         return new ModuleReference(
                 XML.requiredAttributeValue(element, "key"),
                 XML.toURI(XML.optionalAttributeValue(element, "source")),
-                Sets.newTreeSet(Iterables.transform(Sets.newHashSet(XML.toList(XML.optionalAttributeValue(element, "included"))), Reference.FROM_STRING)),
-                Sets.newTreeSet(Iterables.transform(Sets.newHashSet(XML.toList(XML.optionalAttributeValue(element, "except"))), Reference.FROM_STRING)),
+                XML.toList(XML.optionalAttributeValue(element, "included")).stream().map(Reference::new).collect(Collectors.toCollection(TreeSet::new)),
+                XML.toList(XML.optionalAttributeValue(element, "except")).stream().map(Reference::new).collect(Collectors.toCollection(TreeSet::new)),
                 XML.optionalAttributeValue(element, "prefix")
         );
     }

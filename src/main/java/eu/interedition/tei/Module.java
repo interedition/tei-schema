@@ -19,10 +19,6 @@
 
 package eu.interedition.tei;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
-import com.google.common.io.PatternFilenameFilter;
 import eu.interedition.tei.util.LocalizedStrings;
 import eu.interedition.tei.util.XML;
 
@@ -33,6 +29,7 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -62,13 +59,13 @@ public class Module implements Identified {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this).addValue(getIdent()).toString();
+        return "Module[" + getIdent() + "]";
     }
 
     public static Map<String, Module> read(File guidelines) throws XMLStreamException {
-        final Map<String, Module> modules = Maps.newHashMap();
+        final Map<String, Module> modules = new HashMap<>();
 
-        for (final File xmlFile : guidelines.listFiles(new PatternFilenameFilter(".+?\\.xml$"))) {
+        for (final File xmlFile : guidelines.listFiles((dir, name) -> name.endsWith(".xml"))) {
             final XMLEventReader xml = XML.inputFactory().createXMLEventReader(new StreamSource(xmlFile));
             try {
                 Module module = null;
@@ -78,10 +75,9 @@ public class Module implements Identified {
                         final StartElement element = event.asStartElement();
                         if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "moduleSpec")) {
                             final String id = XML.requiredAttributeValue(element, "ident");
-                            Preconditions.checkState(
-                                    modules.put(id, module = new Module(id)) == null,
-                                    id + " is not a unique identifier"
-                            );
+                            if (modules.put(id, module = new Module(id)) == null) {
+                                throw new IllegalStateException(id + " is not a unique identifier");
+                            }
                         } else if (module != null && XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "desc")) {
                             module.getDescriptions().add(element, xml);
                         }

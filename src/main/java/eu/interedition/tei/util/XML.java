@@ -19,9 +19,6 @@
 
 package eu.interedition.tei.util;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -34,49 +31,17 @@ import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
 public class XML {
 
-    private static XMLOutputFactory xmlOutputFactory;
-    private static XMLInputFactory xmlInputFactory;
-
-    public static Iterable<Node> nodes(final NodeList nodeList) {
-        final int length = nodeList.getLength();
-        return () -> new Iterator<Node>() {
-
-            private int nc = 0;
-
-            @Override
-            public boolean hasNext() {
-                return nc < length;
-            }
-
-            @Override
-            public Node next() {
-                return nodeList.item(nc++);
-            }
-        };
-    }
-
-    public static Iterable<Element> elements(final NodeList nodeList) {
-        return StreamSupport.stream(nodes(nodeList).spliterator(), false)
-                .filter(n -> n.getNodeType() == Node.ELEMENT_NODE)
-                .map(n -> (Element) n)
-                .collect(Collectors.toList());
-    }
-
-    public static String requiredAttributeValue(Element element, String qname) {
-        return Objects.requireNonNull(Optional.of(element.getAttribute(qname)).filter(s -> !s.isEmpty()).orElse(null));
-    }
+    private static XMLOutputFactory outputFactory;
+    private static XMLInputFactory inputFactory;
 
     public static String requiredAttributeValue(StartElement element, String attributeName) {
         return Objects.requireNonNull(optionalAttributeValue(element, attributeName));
@@ -88,22 +53,22 @@ public class XML {
     }
 
     public static XMLOutputFactory outputFactory() {
-        if (xmlOutputFactory == null) {
-            xmlOutputFactory = XMLOutputFactory.newInstance();
-            xmlOutputFactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
+        if (outputFactory == null) {
+            outputFactory = XMLOutputFactory.newInstance();
+            outputFactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
         }
-        return xmlOutputFactory;
+        return outputFactory;
     }
 
     public static XMLInputFactory inputFactory() {
-        if (xmlInputFactory == null) {
-            xmlInputFactory = XMLInputFactory.newFactory();
-            xmlInputFactory.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, true);
-            xmlInputFactory.setProperty(XMLInputFactory.IS_VALIDATING, false);
-            xmlInputFactory.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false);
-            xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        if (inputFactory == null) {
+            inputFactory = XMLInputFactory.newFactory();
+            inputFactory.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, true);
+            inputFactory.setProperty(XMLInputFactory.IS_VALIDATING, false);
+            inputFactory.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false);
+            inputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
         }
-        return xmlInputFactory;
+        return inputFactory;
     }
 
     public static final ErrorHandler STRICT_ERROR_HANDLER = new ErrorHandler() {

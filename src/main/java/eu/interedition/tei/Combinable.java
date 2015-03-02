@@ -22,6 +22,7 @@ package eu.interedition.tei;
 import eu.interedition.tei.util.XML;
 
 import javax.xml.stream.events.StartElement;
+import java.util.Optional;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -36,21 +37,21 @@ public interface Combinable {
     enum EditOperation {
         ADD, CHANGE, REPLACE, DELETE;
 
-        public static EditOperation from(StartElement element) {
-            final String mode = XML.optionalAttributeValue(element, "mode");
-            if (mode == null) {
-                return null;
-            }
-            if ("change".equals(mode)) {
-                return CHANGE;
-            } else if ("add".equals(mode)) {
-                return ADD;
-            } else if ("delete".equals(mode)) {
-                return DELETE;
-            } else if ("replace".equals(mode)) {
-                return REPLACE;
-            }
-            throw new IllegalArgumentException(mode);
+        public static Optional<EditOperation> from(StartElement element) {
+            return XML.attr(element, "mode").map(mode -> {
+                switch (mode) {
+                    case "change":
+                        return CHANGE;
+                    case "add":
+                        return ADD;
+                    case "delete":
+                        return DELETE;
+                    case "replace":
+                        return REPLACE;
+                    default:
+                        throw new IllegalArgumentException(mode);
+                }
+            });
         }
     }
 }

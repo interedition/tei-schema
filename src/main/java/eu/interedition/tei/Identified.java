@@ -19,6 +19,8 @@
 
 package eu.interedition.tei;
 
+import java.util.Optional;
+
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
@@ -26,6 +28,6 @@ public interface Identified {
 
     String getIdent();
 
-    String getModule();
+    Optional<String> getModule();
 
 }

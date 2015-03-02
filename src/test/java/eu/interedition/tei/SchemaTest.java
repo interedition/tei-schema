@@ -19,12 +19,11 @@
 
 package eu.interedition.tei;
 
-import eu.interedition.tei.util.XML;
 import org.junit.Test;
 
-import javax.xml.stream.XMLEventReader;
-import javax.xml.transform.stream.StreamSource;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -39,9 +38,8 @@ public class SchemaTest {
 
     @Test
     public void readSchema() throws Exception {
-        final String teiRootPath = System.getProperty("tei.root");
-        if (teiRootPath != null) {
-            SpecificationGraph.create(Schema.read(new File(teiRootPath)))
+        try (InputStream xmlStream = getClass().getResourceAsStream("/tei-all.xml")) {
+            SpecificationGraph.create(Schema.read(xmlStream))
                     .specificationDependencies
                     .forEach((id, dependencies) -> LOG.fine(() -> Stream.of(id, dependencies).map(Object::toString).collect(Collectors.joining(" - "))));
         }
@@ -56,14 +54,11 @@ public class SchemaTest {
                 throw new IllegalArgumentException(data.toString());
             }
             for (File oddFile : data.listFiles((dir, name) -> name.endsWith(".odd"))) {
-                LOG.fine(oddFile.toString());
-                XMLEventReader xml = XML.inputFactory().createXMLEventReader(new StreamSource(oddFile));
-                try {
-                    Schema.read(xml);
+                LOG.fine(oddFile::toString);
+                try (InputStream xmlStream = new FileInputStream(oddFile)) {
+                    Schema.read(xmlStream);
                 } catch (UnsupportedOperationException e) {
-                    LOG.log(Level.SEVERE, e.getMessage(), e);
-                } finally {
-                    xml.close();
+                    LOG.log(Level.SEVERE, e, e::getMessage);
                 }
             }
         }

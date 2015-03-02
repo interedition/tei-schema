@@ -25,6 +25,7 @@ import javax.xml.stream.events.StartElement;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -32,20 +33,20 @@ import java.util.Objects;
 public class Reference implements Comparable<Reference> {
 
     final String key;
-    final URI source;
+    final Optional<URI> source;
 
     public static Reference from(StartElement element) {
         return new Reference(
-                XML.requiredAttributeValue(element, "key"),
-                XML.toURI(XML.optionalAttributeValue(element, "source"))
+                XML.requiredAttr(element, "key"),
+                XML.attr(element, "source").map(URI::create)
         );
     }
 
     public Reference(String key) {
-        this(key, null);
+        this(key, Optional.empty());
     }
 
-    public Reference(String key, URI source) {
+    public Reference(String key, Optional<URI> source) {
         this.key = key;
         this.source = source;
     }
@@ -71,5 +72,5 @@ public class Reference implements Comparable<Reference> {
     }
 
     private static final Comparator<Reference> COMPARATOR = Comparator.comparing((Reference r) -> r.key)
-            .thenComparing(Comparator.nullsFirst(Comparator.comparing(r -> r.source)));
+            .thenComparing(Comparator.nullsFirst(Comparator.comparing(r -> r.source.orElse(null))));
 }

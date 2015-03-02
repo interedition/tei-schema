@@ -28,7 +28,6 @@ import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.util.ArrayList;
-import java.util.Optional;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -38,7 +37,7 @@ public class AttributeList extends ArrayList<AttributeNode> implements Attribute
     final boolean alternative;
 
     public AttributeList(StartElement element) {
-        this("choice".equals(Optional.ofNullable(XML.optionalAttributeValue(element, "org")).orElse("")));
+        this(XML.attr(element, "org").filter("choice"::equals).isPresent());
     }
 
     public AttributeList(boolean alternative) {

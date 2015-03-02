@@ -29,11 +29,8 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -43,13 +40,13 @@ public class XML {
     private static XMLOutputFactory outputFactory;
     private static XMLInputFactory inputFactory;
 
-    public static String requiredAttributeValue(StartElement element, String attributeName) {
-        return Objects.requireNonNull(optionalAttributeValue(element, attributeName));
+    public static String requiredAttr(StartElement element, String attributeName) {
+        return attr(element, attributeName).orElseThrow(() -> new IllegalArgumentException(attributeName));
     }
 
-    public static String optionalAttributeValue(StartElement element, String attributeName) {
+    public static Optional<String> attr(StartElement element, String attributeName) {
         final Attribute attribute = element.getAttributeByName(new QName(attributeName));
-        return Optional.ofNullable(attribute).map(Attribute::getValue).filter(s -> !s.isEmpty()).orElse(null);
+        return Optional.ofNullable(attribute).map(Attribute::getValue).filter(s -> !s.isEmpty());
     }
 
     public static XMLOutputFactory outputFactory() {
@@ -100,11 +97,5 @@ public class XML {
         return localName.equals(name.getLocalPart()) && (ns == null || ns.equals(name.getNamespaceURI()));
     }
 
-    public static URI toURI(String str) {
-        return (str == null || str.isEmpty() ? null : URI.create(str));
-    }
-
-    public static List<String> toList(String str) {
-        return Arrays.asList(Optional.ofNullable(str).orElse("").split("\\s+"));
-    }
+    public static final Pattern WS_RUN = Pattern.compile("\\s+");
 }

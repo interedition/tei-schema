@@ -27,26 +27,27 @@ import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
+import java.util.Optional;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
  */
 public class AttributeDefinition implements AttributeNode, Comparable<Identified>, Identified, Combinable {
     final String ident;
-    final String module;
-    final String namespace;
-    final String usage;
+    final Optional<String> module;
+    final Optional<String> namespace;
+    final Optional<String> usage;
     final ContentModel dataType;
     final Values values;
     final LocalizedStrings defaultValues;
     final Combinable.EditOperation editOperation;
 
     public AttributeDefinition(StartElement element, ContentModel dataType, Values values, LocalizedStrings defaultValues) {
-        this.ident = XML.requiredAttributeValue(element, "ident");
-        this.module = XML.optionalAttributeValue(element, "module");
-        this.usage = XML.optionalAttributeValue(element, "usage");
-        this.namespace = XML.optionalAttributeValue(element, "ns");
-        this.editOperation = Combinable.EditOperation.from(element);
+        this.ident = XML.requiredAttr(element, "ident");
+        this.module = XML.attr(element, "module");
+        this.usage = XML.attr(element, "usage");
+        this.namespace = XML.attr(element, "ns");
+        this.editOperation = Combinable.EditOperation.from(element).orElse(EditOperation.ADD);
         this.dataType = dataType;
         this.values = values;
         this.defaultValues = defaultValues;
@@ -57,15 +58,15 @@ public class AttributeDefinition implements AttributeNode, Comparable<Identified
     }
 
 
-    public String getModule() {
+    public Optional<String> getModule() {
         return module;
     }
 
-    public String getNamespace() {
+    public Optional<String> getNamespace() {
         return namespace;
     }
 
-    public String getUsage() {
+    public Optional<String> getUsage() {
         return usage;
     }
 

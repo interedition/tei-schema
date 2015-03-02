@@ -23,12 +23,12 @@ import eu.interedition.tei.util.LocalizedStrings;
 import eu.interedition.tei.util.XML;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
 
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.util.ArrayList;
-import java.util.Optional;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -53,16 +53,21 @@ public class Values extends ArrayList<Values.Item> implements Combinable {
 
     public static Values parse(StartElement valList, XMLEventReader xml) throws XMLStreamException, IllegalSchemaException {
         final Values values = new Values(
-                Optional.ofNullable(Type.from(XML.optionalAttributeValue(valList, "type"))).orElse(Type.OPEN),
-                Combinable.EditOperation.from(valList)
+                XML.attr(valList, "type").map(Type::from).orElse(Type.OPEN),
+                Combinable.EditOperation.from(valList).orElse(EditOperation.ADD)
         );
 
+        final QName startName = valList.getName();
         while (xml.hasNext()) {
             final XMLEvent event = xml.nextEvent();
             if (event.isStartElement()) {
                 final StartElement element = event.asStartElement();
                 if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "valItem")) {
                     values.add(Item.from(element, xml));
+                }
+            } else if (event.isEndElement()) {
+                if (event.asEndElement().getName().equals(startName)) {
+                    break;
                 }
             }
         }
@@ -84,9 +89,10 @@ public class Values extends ArrayList<Values.Item> implements Combinable {
 
         public static Item from(StartElement itemElement, XMLEventReader xml) throws XMLStreamException {
             final Item item = new Item(
-                    XML.requiredAttributeValue(itemElement, "ident"),
-                    EditOperation.from(itemElement)
+                    XML.requiredAttr(itemElement, "ident"),
+                    EditOperation.from(itemElement).orElse(EditOperation.ADD)
             );
+            final QName startName = itemElement.getName();
             while (xml.hasNext()) {
                 final XMLEvent event = xml.nextEvent();
                 if (event.isStartElement()) {
@@ -97,6 +103,10 @@ public class Values extends ArrayList<Values.Item> implements Combinable {
                         item.definitions.add(element, xml);
                     } else if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "altIdent")) {
                         item.altIdents.add(element, xml);
+                    }
+                } else if (event.isEndElement()) {
+                    if (event.asEndElement().getName().equals(startName)) {
+                        break;
                     }
                 }
             }

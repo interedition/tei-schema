@@ -31,6 +31,7 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -49,8 +50,8 @@ public class Module implements Identified {
         return ident;
     }
 
-    public String getModule() {
-        return null;
+    public Optional<String> getModule() {
+        return Optional.empty();
     }
 
     public LocalizedStrings getDescriptions() {
@@ -74,7 +75,7 @@ public class Module implements Identified {
                     if (event.isStartElement()) {
                         final StartElement element = event.asStartElement();
                         if (XML.hasName(element, Namespaceable.DEFAULT_NS_STR, "moduleSpec")) {
-                            final String id = XML.requiredAttributeValue(element, "ident");
+                            final String id = XML.requiredAttr(element, "ident");
                             if (modules.put(id, module = new Module(id)) == null) {
                                 throw new IllegalStateException(id + " is not a unique identifier");
                             }

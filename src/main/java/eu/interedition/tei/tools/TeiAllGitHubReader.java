@@ -101,7 +101,9 @@ public class TeiAllGitHubReader {
         schemaSpec.setAttribute("source", source);
         
         specificationDocuments()
+                .toSortedList((d1, d2) -> d1.getDocumentElement().getAttribute("ident").compareTo(d2.getDocumentElement().getAttribute("ident")))
                 .toBlocking()
+                .single()
                 .forEach(part -> schemaSpec.appendChild(specification.importNode(part.getDocumentElement(), true)));
         
         return specification;

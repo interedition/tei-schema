@@ -26,7 +26,6 @@ import org.kohsuke.rngom.parse.IllegalSchemaException;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import javax.xml.transform.TransformerException;
@@ -44,10 +43,10 @@ import java.util.Set;
 public class Specification implements Identified, Namespaceable, Combinable {
 
     final String ident;
-    final String module;
+    final Optional<String> module;
     final URI namespace;
     final Type type;
-    final String specType;
+    final Optional<String> specType;
     final Combinable.EditOperation editOperation;
 
     final LocalizedStrings descriptions;
@@ -58,36 +57,44 @@ public class Specification implements Identified, Namespaceable, Combinable {
     final AttributeList attributes;
     final Map<String, EditOperation> classes;
 
-    public static Specification from(XMLEvent event, XMLEventReader xml) throws XMLStreamException, IllegalSchemaException {
-        final StartElement specElement = event.asStartElement();
-
+    public static Specification from(StartElement specElement, XMLEventReader xml) throws XMLStreamException, IllegalSchemaException {
         final LocalizedStrings descriptions = new LocalizedStrings();
         final LocalizedStrings altIdents = new LocalizedStrings();
         final Map<String, EditOperation> classes = new HashMap<>();
-        EditOperation classesEditOperation = null;
+        Optional<EditOperation> classesEditOperation = Optional.empty();
         AttributeList attributeList = null;
         ContentModel contentModel = null;
 
+        final QName startName = specElement.getName();
         while (xml.hasNext()) {
-            event = xml.nextEvent();
+            final XMLEvent event = xml.nextEvent();
             if (event.isStartElement()) {
                 final StartElement element = event.asStartElement();
-                if (XML.hasName(element, DEFAULT_NS_STR, "classes")) {
-                    classesEditOperation = Combinable.EditOperation.from(element);
-                } else if (XML.hasName(element, DEFAULT_NS_STR, "memberOf")) {
-                    classes.put(XML.requiredAttributeValue(element, "key"), Combinable.EditOperation.from(element));
-                } else if (XML.hasName(element, DEFAULT_NS_STR, "content")) {
-                    contentModel = ContentModel.parse(xml, "content");
-                } else if (XML.hasName(element, DEFAULT_NS_STR, "attList")) {
-                    attributeList = AttributeList.parse(element, xml);
-                } else if (XML.hasName(element, DEFAULT_NS_STR, "altIdent")) {
-                    altIdents.add(element, xml);
-                } else if (XML.hasName(element, DEFAULT_NS_STR, "desc")) {
-                    descriptions.add(element, xml);
+                final QName elementName = element.getName();
+                if (DEFAULT_NS_STR.equals(elementName.getNamespaceURI())) {
+                    switch (elementName.getLocalPart())  {
+                        case "classes":
+                            classesEditOperation = Combinable.EditOperation.from(element);
+                            break;
+                        case "memberOf":
+                            classes.put(XML.requiredAttr(element, "key"), Combinable.EditOperation.from(element).orElse(EditOperation.ADD));
+                            break;
+                        case "content":
+                            contentModel = ContentModel.parse(xml, "content");
+                            break;
+                        case "attList":
+                            attributeList = AttributeList.parse(element, xml);
+                            break;
+                        case "altIdent":
+                            altIdents.add(element, xml);
+                            break;
+                        case "desc":
+                            descriptions.add(element, xml);
+                            break;
+                    }
                 }
             } else if (event.isEndElement()) {
-                final EndElement element = event.asEndElement();
-                if (isSpecificationElement(element)) {
+                if (event.asEndElement().getName().equals(startName)) {
                     break;
                 }
             }
@@ -96,7 +103,7 @@ public class Specification implements Identified, Namespaceable, Combinable {
                 specElement,
                 descriptions,
                 altIdents,
-                classesEditOperation,
+                classesEditOperation.orElse(EditOperation.ADD),
                 classes,
                 Optional.ofNullable(attributeList).orElse(new AttributeList(false)),
                 contentModel
@@ -110,12 +117,12 @@ public class Specification implements Identified, Namespaceable, Combinable {
         this.classes = classes;
         this.attributes = attributes;
         this.content = content;
-        this.ident = XML.requiredAttributeValue(specElement, "ident");
-        this.module = XML.optionalAttributeValue(specElement, "module");
-        this.namespace = Optional.ofNullable(XML.toURI(XML.optionalAttributeValue(specElement, "ns"))).orElse(DEFAULT_NS);
+        this.ident = XML.requiredAttr(specElement, "ident");
+        this.module = XML.attr(specElement, "module");
+        this.namespace = XML.attr(specElement, "ns").map(URI::create).orElse(DEFAULT_NS);
         this.type = Type.from(specElement.getName().getLocalPart());
-        this.specType = XML.optionalAttributeValue(specElement, "type");
-        this.editOperation = Combinable.EditOperation.from(specElement);
+        this.specType = XML.attr(specElement, "type");
+        this.editOperation = Combinable.EditOperation.from(specElement).orElse(EditOperation.ADD);
     }
 
     @Override
@@ -123,7 +130,7 @@ public class Specification implements Identified, Namespaceable, Combinable {
         return ident;
     }
 
-    public String getModule() {
+    public Optional<String> getModule() {
         return module;
     }
 
@@ -135,7 +142,7 @@ public class Specification implements Identified, Namespaceable, Combinable {
         return type;
     }
 
-    public String getSpecType() {
+    public Optional<String> getSpecType() {
         return specType;
     }
 
@@ -179,8 +186,9 @@ public class Specification implements Identified, Namespaceable, Combinable {
         while (xml.hasNext()) {
             final XMLEvent event = xml.nextEvent();
             if (event.isStartElement()) {
-                if (isSpecificationElement(event.asStartElement())) {
-                    specifications.add(Specification.from(event, xml));
+                final StartElement startElement = event.asStartElement();
+                if (isSpecificationElement(startElement)) {
+                    specifications.add(Specification.from(startElement, xml));
                 }
             }
         }
@@ -188,10 +196,6 @@ public class Specification implements Identified, Namespaceable, Combinable {
     }
 
     static boolean isSpecificationElement(StartElement element) {
-        return isSpecificationElement(element.getName());
-    }
-
-    static boolean isSpecificationElement(EndElement element) {
         return isSpecificationElement(element.getName());
     }
 

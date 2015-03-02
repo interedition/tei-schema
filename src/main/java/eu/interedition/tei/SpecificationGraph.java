@@ -39,10 +39,7 @@ public class SpecificationGraph {
         final SpecificationGraph graph = new SpecificationGraph(schema);
 
         for (Specification specification : schema.specifications.values()) {
-            final String module = specification.getModule();
-            if (module != null) {
-                graph.moduleMembers.computeIfAbsent(module, m -> new TreeSet<>()).add(specification.getIdent());
-            }
+            specification.getModule().ifPresent(module -> graph.moduleMembers.computeIfAbsent(module, m -> new TreeSet<>()).add(specification.getIdent()));
             final String id = specification.getIdent();
             for (String classMembership : specification.classes.keySet()) {
                 graph.classMembers.computeIfAbsent(classMembership, m -> new TreeSet<>()).add(id);
@@ -76,21 +73,17 @@ public class SpecificationGraph {
         }
 
         graph.specificationDependencies.forEach((id, dependencies) -> {
-            final String moduleId1 = schema.specifications.get(id).getModule();
-            if (moduleId1 == null) {
-                return;
-            }
-            dependencies.forEach(dependency -> {
-                final String moduleId2 = schema.specifications.get(dependency).getModule();
-                if (moduleId2 == null) {
-                    return;
-                }
-                final int order = moduleId1.compareTo(moduleId2);
-                if (order < 0) {
-                    graph.moduleDependencies.computeIfAbsent(moduleId1, k -> new TreeSet<>()).add(moduleId2);
-                } else if (order > 0) {
-                    graph.moduleDependencies.computeIfAbsent(moduleId2, k -> new TreeSet<>()).add(moduleId1);
-                }
+            schema.specifications.get(id).getModule().ifPresent(moduleId1 -> {
+                dependencies.forEach(dependency -> {
+                    schema.specifications.get(dependency).getModule().ifPresent(moduleId2 -> {
+                        final int order = moduleId1.compareTo(moduleId2);
+                        if (order < 0) {
+                            graph.moduleDependencies.computeIfAbsent(moduleId1, k -> new TreeSet<>()).add(moduleId2);
+                        } else if (order > 0) {
+                            graph.moduleDependencies.computeIfAbsent(moduleId2, k -> new TreeSet<>()).add(moduleId1);
+                        }
+                    });
+                });
             });
         });
 

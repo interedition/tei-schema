@@ -23,9 +23,11 @@ import eu.interedition.tei.util.XML;
 
 import javax.xml.stream.events.StartElement;
 import java.net.URI;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -33,10 +35,10 @@ import java.util.stream.Collectors;
 public class ModuleReference extends Reference {
     final Set<Reference> included;
     final Set<Reference> excluded;
-    final String prefix;
+    final Optional<String> prefix;
 
-    public ModuleReference(String key, URI source, Set<Reference> included, Set<Reference> excluded, String prefix) {
-        super(key, source);
+    public ModuleReference(String key, URI source, Set<Reference> included, Set<Reference> excluded, Optional<String> prefix) {
+        super(key, Optional.of(source));
         this.included = included;
         this.excluded = excluded;
         this.prefix = prefix;
@@ -44,11 +46,11 @@ public class ModuleReference extends Reference {
 
     public static ModuleReference from(StartElement element) {
         return new ModuleReference(
-                XML.requiredAttributeValue(element, "key"),
-                XML.toURI(XML.optionalAttributeValue(element, "source")),
-                XML.toList(XML.optionalAttributeValue(element, "included")).stream().map(Reference::new).collect(Collectors.toCollection(TreeSet::new)),
-                XML.toList(XML.optionalAttributeValue(element, "except")).stream().map(Reference::new).collect(Collectors.toCollection(TreeSet::new)),
-                XML.optionalAttributeValue(element, "prefix")
+                XML.requiredAttr(element, "key"),
+                XML.attr(element, "source").map(URI::create).orElse(null),
+                XML.attr(element, "included").map(ref -> XML.WS_RUN.splitAsStream(ref).map(Reference::new)).orElse(Stream.<Reference>empty()).collect(Collectors.toCollection(TreeSet::new)),
+                XML.attr(element, "except").map(ref -> XML.WS_RUN.splitAsStream(ref).map(Reference::new)).orElse(Stream.<Reference>empty()).collect(Collectors.toCollection(TreeSet::new)),
+                XML.attr(element, "prefix")
         );
     }
 }

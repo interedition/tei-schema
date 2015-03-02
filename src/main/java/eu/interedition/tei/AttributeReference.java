@@ -22,6 +22,7 @@ package eu.interedition.tei;
 import eu.interedition.tei.util.XML;
 
 import javax.xml.stream.events.StartElement;
+import java.util.Optional;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -31,7 +32,7 @@ public class AttributeReference implements AttributeNode, Identified, Comparable
     final String ident;
 
     public AttributeReference(StartElement element) {
-        this.ident = XML.requiredAttributeValue(element, "name");
+        this.ident = XML.requiredAttr(element, "name");
     }
 
     @Override
@@ -39,8 +40,8 @@ public class AttributeReference implements AttributeNode, Identified, Comparable
         return ident;
     }
 
-    public String getModule() {
-        return null;
+    public Optional<String> getModule() {
+        return Optional.empty();
     }
 
     @Override

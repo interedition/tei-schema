@@ -19,8 +19,6 @@
 
 package eu.interedition.tei;
 
-import eu.interedition.tei.util.XML;
-
 import java.net.URI;
 
 /**
@@ -30,7 +28,7 @@ public interface Namespaceable {
 
     String DEFAULT_NS_STR = "http://www.tei-c.org/ns/1.0";
 
-    URI DEFAULT_NS = XML.toURI(DEFAULT_NS_STR);
+    URI DEFAULT_NS = URI.create(DEFAULT_NS_STR);
 
     URI getNamespace();
 }
